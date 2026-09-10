@@ -4,24 +4,45 @@ The Android half. It becomes Device Owner, runs an HTTP endpoint on port 8484
 for Home Assistant, applies policy through `DevicePolicyManager`, and reports
 back to a Home Assistant webhook.
 
-Status: written against the public Android API, not yet compiled or run on a
-tablet. Treat every line as unverified until docs/live_qualification.md records
-a pass.
+Status: compiles with AGP 9.4.0 on Gradle 9.7.1 and passed the Device Owner
+round trip on an Android 15 emulator on 2026-09-10; see
+docs/live_qualification.md for what was and was not observed.
 
 ## Build
 
-Requires Android Studio Ladybug or newer, or a command-line SDK with build
-tools 35 and JDK 17. No Gradle wrapper is committed; generate one with a local
-Gradle 8.9 or newer:
+Requires a JDK 17 or newer (the Android Studio bundled JDK 25 works) and an
+Android SDK with platform 35. The Gradle wrapper is committed and pins
+Gradle 9.7.1; AGP 9.4.0 applies Kotlin itself, so no Kotlin plugin is declared.
 
 ```bash
 cd android
-gradle wrapper --gradle-version 8.9
+./gradlew assembleDebug
 ./gradlew assembleRelease
 ```
 
+On Windows set `JAVA_HOME` to `C:\Program Files\Android\Android Studio\jbr`
+and `ANDROID_HOME` to `%LOCALAPPDATA%\Android\Sdk` first. AGP 8.x cannot
+run on Gradle 9.6 or newer (it used an internal Gradle API), which is why the
+project is on AGP 9.
+
 The release build is unsigned; sign it with your own key. Never publish the
 key or a signed APK in this repository.
+
+## Emulator for provisioning tests
+
+Google Play system images refuse `dpm set-device-owner`; use a `google_apis`
+image:
+
+```bash
+sdkmanager "system-images;android-35;google_apis;x86_64"
+avdmanager create avd -n mdm_test -k "system-images;android-35;google_apis;x86_64" -d pixel_tablet
+emulator -avd mdm_test -no-snapshot
+adb -s emulator-5554 forward tcp:28484 tcp:8484
+adb -s emulator-5554 reverse tcp:8123 tcp:8123
+```
+
+The forward exposes the DPC on the host at 127.0.0.1:28484; the reverse lets
+the DPC reach a host receiver at 127.0.0.1:8123 as the webhook target.
 
 ## Provision
 

@@ -122,7 +122,8 @@ that is Device Owner without a Google account.
 
 - Plain HTTP with a bearer token on the LAN. Segment the tablet VLAN; see
   docs/security.md.
-- The Android app has not yet been compiled or run on hardware. The API
-  calls used are documented DevicePolicyManager methods, but the kiosk
-  hand-off and the foreground service type on Android 14 and 15 are unverified.
+- The Android app is qualified on an Android 15 emulator (Device Owner,
+  full round trip, reboot persistence) and as a plain app on an Android 16
+  phone. A Samsung tablet and Android 14 are not yet observed; see
+  docs/live_qualification.md.
 - One entry per tablet; no discovery yet.

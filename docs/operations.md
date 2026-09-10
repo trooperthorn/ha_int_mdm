@@ -18,8 +18,11 @@ custom_components/local_mdm/`, `pytest tests`, and
 `tests/test_api.py` opens real sockets on localhost against an aiohttp test
 server; it requests the harness's `socket_enabled` fixture for that.
 
-The Android app has no CI job yet; there is no Android SDK on the runner
-image by default and no wrapper is committed. See backlog.md.
+`android.yml` compiles the debug APK on every push with the committed
+wrapper (Gradle 9.7.1) on Temurin JDK 21 and checks the Gradle `versionName`
+against the manifest. It is not a required check yet; add it to protection
+after it has been green for a few merges. Locally: `cd android && ./gradlew
+assembleDebug` with `JAVA_HOME` pointing at the Android Studio JBR.
 
 ## Release path
 
