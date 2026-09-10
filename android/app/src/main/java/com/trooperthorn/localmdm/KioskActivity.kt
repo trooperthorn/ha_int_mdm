@@ -27,7 +27,11 @@ class KioskActivity : Activity() {
             finishAndRemoveTask()
             return
         }
-        val target = intent.getStringExtra(EXTRA_TARGET) ?: return finish()
+        // No extras means a HOME press or a boot into the persistent home:
+        // follow the stored policy instead of an explicit request.
+        val target = intent.getStringExtra(EXTRA_TARGET)
+            ?: PolicyStore(this).policy.takeIf { it.kioskMode }?.kioskPackages?.firstOrNull()
+            ?: return finish()
         runCatching { startLockTask() }
         MdmService.requestReport(this)
         packageManager.getLaunchIntentForPackage(target)?.let { launch ->

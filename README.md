@@ -18,13 +18,14 @@ protocol, security, and operations detail live in [docs/README.md](docs/README.m
 
 One device per tablet with:
 
-- Ten policy switches (kiosk mode, camera, screen capture, status bar, app
-  install and uninstall, USB file transfer, volume, safe boot, factory reset).
-  The switch is the desired state.
+- Twelve policy switches (kiosk mode, camera, screen capture, status bar, app
+  install and uninstall, USB file transfer, volume, safe boot, factory reset,
+  automatic OS updates, stay awake on power). The switch is the desired state.
 - One "enforced" binary sensor per policy, on only when the tablet reports the
   policy applied. This is the round-trip proof the switch alone cannot give.
 - Status sensors: Device Owner, kiosk lock, enforcement problem, Wi-Fi,
-  battery, charging, policy version, DPC version, last report.
+  battery, charging, OS update pending, Android version, security patch,
+  kiosk app version, policy version, DPC version, last report.
 - Buttons: lock screen now, refresh. A text entity holds the kiosk package list.
 
 The tablet pushes every change to a Home Assistant webhook immediately; polling
@@ -109,7 +110,17 @@ automation:
 Kiosk mode needs a target application. Set `text.tablet_kitchen_kiosk_packages`
 to a comma-separated list of package names first (for example
 `io.homeassistant.companion.android`); with no packages the kiosk switch
-refuses to turn on, which is the safe failure.
+refuses to turn on, which is the safe failure. While kiosk is on the DPC is
+also the HOME app, so a reboot or a home press lands back in the first
+package under lock task.
+
+## Wall tablet with the Companion app
+
+The intended shape for a dedicated console: Companion as the only app,
+OS updates installed as soon as the vendor offers them, screen always on
+while powered. The standing policy, the provisioning order, and how this
+changes the enforced-versus-cosmetic table of a Companion-only design are in
+[docs/console-lockout.md](docs/console-lockout.md).
 
 ## Removing the integration
 

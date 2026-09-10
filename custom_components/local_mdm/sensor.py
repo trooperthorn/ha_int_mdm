@@ -70,6 +70,30 @@ SENSORS: tuple[LocalMdmSensorDescription, ...] = (
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=_reported_at,
     ),
+    LocalMdmSensorDescription(
+        key="os_version",
+        translation_key="os_version",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda s: s.os_release,
+    ),
+    LocalMdmSensorDescription(
+        key="security_patch",
+        translation_key="security_patch",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda s: s.security_patch,
+    ),
+    LocalMdmSensorDescription(
+        key="kiosk_app_version",
+        translation_key="kiosk_app_version",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda s: next(iter(s.installed.values()), None),
+    ),
+    LocalMdmSensorDescription(
+        key="last_install",
+        translation_key="last_install",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda s: (s.last_install or {}).get("state"),
+    ),
 )
 
 
@@ -94,6 +118,14 @@ class LocalMdmSensor(LocalMdmEntity, SensorEntity):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
-        if self.entity_description.key != "enforcement_failures":
-            return None
-        return {"keys": self.coordinator.data.enforcement_failures}
+        status = self.coordinator.data
+        match self.entity_description.key:
+            case "enforcement_failures":
+                return {"keys": status.enforcement_failures}
+            case "os_version":
+                return {"build": status.os_build, "update_received_at": status.update_received_at}
+            case "kiosk_app_version":
+                return {"installed": status.installed}
+            case "last_install":
+                return dict(status.last_install or {})
+        return None

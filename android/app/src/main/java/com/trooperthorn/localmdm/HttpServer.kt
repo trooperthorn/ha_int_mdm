@@ -15,6 +15,7 @@ class HttpServer(
     private val store: PolicyStore,
     private val engine: PolicyEngine,
     private val onReport: () -> Unit,
+    private val installer: Installer,
 ) : NanoHTTPD(port) {
 
     override fun serve(session: IHTTPSession): Response {

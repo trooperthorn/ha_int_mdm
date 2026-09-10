@@ -52,7 +52,9 @@
       "usb_file_transfer_blocked": { "name": "USB file transfer blocked" },
       "adjust_volume_blocked": { "name": "Volume changes blocked" },
       "safe_boot_blocked": { "name": "Safe boot blocked" },
-      "factory_reset_blocked": { "name": "Factory reset blocked" }
+      "factory_reset_blocked": { "name": "Factory reset blocked" },
+      "auto_os_updates": { "name": "Automatic OS updates" },
+      "stay_awake_on_power": { "name": "Stay awake on power" }
     },
     "binary_sensor": {
       "device_owner": { "name": "Device owner" },
@@ -69,13 +71,20 @@
       "usb_file_transfer_blocked_enforced": { "name": "USB file transfer blocked enforced" },
       "adjust_volume_blocked_enforced": { "name": "Volume changes blocked enforced" },
       "safe_boot_blocked_enforced": { "name": "Safe boot blocked enforced" },
-      "factory_reset_blocked_enforced": { "name": "Factory reset blocked enforced" }
+      "factory_reset_blocked_enforced": { "name": "Factory reset blocked enforced" },
+      "auto_os_updates_enforced": { "name": "Automatic OS updates enforced" },
+      "stay_awake_on_power_enforced": { "name": "Stay awake on power enforced" },
+      "os_update_pending": { "name": "OS update pending" }
     },
     "sensor": {
       "policy_version": { "name": "Policy version" },
       "dpc_version": { "name": "DPC version" },
       "enforcement_failures": { "name": "Enforcement failures" },
-      "last_report": { "name": "Last report" }
+      "last_report": { "name": "Last report" },
+      "os_version": { "name": "Android version" },
+      "security_patch": { "name": "Security patch" },
+      "kiosk_app_version": { "name": "Kiosk app version" },
+      "last_install": { "name": "Last install" }
     },
     "button": {
       "lock_screen": { "name": "Lock screen" }

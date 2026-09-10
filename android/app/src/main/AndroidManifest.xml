@@ -30,6 +30,24 @@
             android:launchMode="singleTask"
             android:excludeFromRecents="true" />
 
+        <!-- Enabled by PolicyEngine only while kiosk mode is on, so the
+             launcher comes back as HOME when kiosk is off. -->
+        <activity-alias
+            android:name=".KioskHome"
+            android:targetActivity=".KioskActivity"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
+
+        <receiver
+            android:name=".InstallReceiver"
+            android:exported="false" />
+
         <receiver
             android:name=".MdmDeviceAdminReceiver"
             android:exported="true"

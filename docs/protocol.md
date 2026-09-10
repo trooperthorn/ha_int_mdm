@@ -38,9 +38,18 @@ non-JSON, 422 when the report's `device_id` is not the entry's tablet.
   "lock_task_active": false,
   "battery": { "level": 87, "charging": true },
   "network": { "wifi_connected": true },
+  "os": { "release": "15", "sdk": 35, "security_patch": "2024-09-05", "build": "...", "model": "...", "manufacturer": "..." },
+  "system_update": { "policy": 1, "pending": false },
+  "installed": { "io.homeassistant.companion.android": "2026.6.5" },
   "reported_at": "2026-09-10T12:00:00Z"
 }
 ```
+
+`system_update.policy` is the `SystemUpdatePolicy` type (0 none, 1 automatic,
+2 windowed, 3 postpone). When `pending` is true the object also carries
+`received_at` and `security_patch_state` from `getPendingSystemUpdate`.
+`installed` maps each kiosk package to its installed `versionName`, or null
+when it is not installed.
 
 `enforcement` values: `applied`, `failed` (a RuntimeException from the
 platform), `refused` (SecurityException, or not Device Owner).
@@ -49,7 +58,7 @@ platform), `refused` (SecurityException, or not Device Owner).
 
 | Key | DevicePolicyManager call | Notes |
 | --- | --- | --- |
-| `kiosk_mode` | `setLockTaskPackages`, `setLockTaskFeatures`, then `KioskActivity.startLockTask` and a launch of the first package | Refused with empty `kiosk_packages` on both sides |
+| `kiosk_mode` | `setLockTaskPackages`, `setLockTaskFeatures`, the `KioskHome` activity alias enabled and made the persistent HOME activity, then `KioskActivity.startLockTask` and a launch of the first package | Refused with empty `kiosk_packages` on both sides; a reboot or a home press lands back in the first package under lock task; kiosk off disables the alias so the launcher is HOME again |
 | `camera_disabled` | `setCameraDisabled` | Needs `<disable-camera/>` in device_admin.xml |
 | `screen_capture_disabled` | `setScreenCaptureDisabled` | |
 | `status_bar_disabled` | `setStatusBarDisabled` | Device Owner only |
@@ -59,6 +68,8 @@ platform), `refused` (SecurityException, or not Device Owner).
 | `adjust_volume_blocked` | `addUserRestriction(DISALLOW_ADJUST_VOLUME)` | |
 | `safe_boot_blocked` | `addUserRestriction(DISALLOW_SAFE_BOOT)` | |
 | `factory_reset_blocked` | `addUserRestriction(DISALLOW_FACTORY_RESET)` | Blocks the Settings path only; recovery-mode wipe still works, which is intended |
+| `auto_os_updates` | `setSystemUpdatePolicy(createAutomaticInstallPolicy())`, or `null` when off | Android installs a system update as soon as the OEM offers it, no user prompt; when off the tablet follows its normal update prompts |
+| `stay_awake_on_power` | `setGlobalSetting(STAY_ON_WHILE_PLUGGED_IN, "7")`, or `"0"` when off | Screen never times out while on AC, USB, or wireless power |
 | `kiosk_packages` | list of package names allowed in lock task | The DPC package is always added by the DPC and always removed from the user's list by the guard |
 
 ## Keys refused on both sides

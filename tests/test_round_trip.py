@@ -154,3 +154,37 @@ async def test_kiosk_packages_text_entity(hass, setup_entry, fake_client: FakeCl
     )
     assert hass.states.get(entity_id).state == "a.app,b.app"
     assert fake_client.policy_calls[-1][0]["kiosk_packages"] == ["a.app", "b.app"]
+
+
+async def test_os_and_app_version_entities(
+    hass, setup_entry, fake_client: FakeClient, hass_client_no_auth
+):
+    prefix = "sensor.tablet_tablet_kitchen"
+    assert hass.states.get(f"{prefix}_android_version").state == "15"
+    assert hass.states.get(f"{prefix}_security_patch").state == "2024-09-05"
+    assert hass.states.get(f"{prefix}_kiosk_app_version").state == "2026.6.5"
+    assert (
+        hass.states.get("binary_sensor.tablet_tablet_kitchen_os_update_pending").state == STATE_OFF
+    )
+
+    reported = status_payload(
+        system_update={"policy": 1, "pending": True, "received_at": "2026-09-10T13:00:00+00:00"},
+        last_install={"state": "installed", "package": "io.homeassistant.companion.android"},
+    )
+    await _post_webhook(hass, hass_client_no_auth, reported)
+    assert (
+        hass.states.get("binary_sensor.tablet_tablet_kitchen_os_update_pending").state == STATE_ON
+    )
+    last = hass.states.get(f"{prefix}_last_install")
+    assert last.state == "installed"
+    assert last.attributes["package"] == "io.homeassistant.companion.android"
+
+
+async def test_new_policy_flags_have_switches(hass, setup_entry, fake_client: FakeClient):
+    for key in ("automatic_os_updates", "stay_awake_on_power"):
+        entity_id = f"switch.tablet_tablet_kitchen_{key}"
+        assert hass.states.get(entity_id).state == STATE_OFF
+        await hass.services.async_call("switch", "turn_on", {"entity_id": entity_id}, blocking=True)
+        assert hass.states.get(entity_id).state == STATE_ON
+    assert fake_client.policy_calls[-1][0]["auto_os_updates"] is True
+    assert fake_client.policy_calls[-1][0]["stay_awake_on_power"] is True

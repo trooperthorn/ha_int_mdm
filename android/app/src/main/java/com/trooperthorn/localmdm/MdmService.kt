@@ -34,7 +34,8 @@ class MdmService : Service() {
         // Re-assert the stored policy on every start: user restrictions
         // survive reboot, lock task mode does not.
         if (engine.isDeviceOwner) engine.apply(store.policy, store.policyVersion)
-        server = HttpServer(PORT, store, engine) { reporter.report() }.also {
+        val installer = Installer(this, store) { reporter.report() }
+        server = HttpServer(PORT, store, engine, { reporter.report() }, installer).also {
             try {
                 it.start(fi.iki.elonen.NanoHTTPD.SOCKET_READ_TIMEOUT, false)
             } catch (err: java.io.IOException) {
