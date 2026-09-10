@@ -51,6 +51,18 @@ report before lock task mode had engaged, so the `kiosk lock` sensor in Home
 Assistant stayed unlocked until the five-minute heartbeat. `KioskActivity` now
 asks the service for a report 750 ms after `startLockTask` or `stopLockTask`.
 
+## 2026-09-10: OS update policy, stay awake, kiosk as HOME, reauth (live HA, emulator)
+
+| Check | How | Result |
+| --- | --- | --- |
+| Reauth after token rotation | DPC token changed; HA raised the reauth flow; completed over the API; entry loaded | pass |
+| `auto_os_updates` switch | `dumpsys device_policy` shows `SystemUpdatePolicy (type: 1)`; `system_update.policy` 1 in status; enforced sensor on | pass |
+| `stay_awake_on_power` switch | `settings get global stay_on_while_plugged_in` is 7 | pass |
+| OS and app version sensors | Android version 15, security patch 2024-09-05, kiosk app version from `installed` | pass |
+| Kiosk as HOME | with kiosk on, `resolve-activity HOME` is `KioskHome`; with kiosk off it is the launcher again | pass |
+| Reboot into kiosk | kiosk on, `adb reboot`, no push from HA: `lock_task_active` true after boot and HA received the boot report | pass |
+
 Not yet observed: a Samsung tablet, Android 14, the kiosk hand-off when the
-target package is a third-party dashboard app, and token rotation from the
-app's button followed by a reauth in a live Home Assistant.
+target package is the Home Assistant Companion app itself (the emulator has
+no Companion installed; `com.android.settings` stood in), a real pending OS
+update on hardware, and the package install action (see backlog).

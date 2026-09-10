@@ -54,6 +54,14 @@ def status_payload(**overrides: Any) -> dict[str, Any]:
         "battery": {"level": 87, "charging": True},
         "network": {"wifi_connected": True},
         "reported_at": "2026-09-10T12:00:00+00:00",
+        "os": {
+            "release": "15",
+            "sdk": 35,
+            "security_patch": "2024-09-05",
+            "build": "AE3A.240806.043",
+        },
+        "system_update": {"policy": 1, "pending": False},
+        "installed": {"io.homeassistant.companion.android": "2026.6.5"},
     }
     payload.update(overrides)
     return payload

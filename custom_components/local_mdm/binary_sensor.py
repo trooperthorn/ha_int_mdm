@@ -55,6 +55,12 @@ STATUS_SENSORS: tuple[LocalMdmBinarySensorDescription, ...] = (
         value_fn=lambda s: s.wifi_connected,
     ),
     LocalMdmBinarySensorDescription(
+        key="os_update_pending",
+        translation_key="os_update_pending",
+        device_class=BinarySensorDeviceClass.UPDATE,
+        value_fn=lambda s: s.update_pending,
+    ),
+    LocalMdmBinarySensorDescription(
         key="battery_charging",
         translation_key="battery_charging",
         device_class=BinarySensorDeviceClass.BATTERY_CHARGING,

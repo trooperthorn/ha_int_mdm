@@ -53,7 +53,13 @@ class PolicyStore(context: Context) {
         }
         set(value) = prefs.edit().putString(KEY_ENFORCEMENT, JSONObject(value).toString()).apply()
 
+    /** Outcome of the last install_package action, reported until the next one. */
+    var lastInstall: JSONObject?
+        get() = prefs.getString(KEY_LAST_INSTALL, null)?.let { runCatching { JSONObject(it) }.getOrNull() }
+        set(value) = prefs.edit().putString(KEY_LAST_INSTALL, value?.toString()).apply()
+
     companion object {
+        private const val KEY_LAST_INSTALL = "last_install"
         private const val KEY_DEVICE_ID = "device_id"
         private const val KEY_TOKEN = "token"
         private const val KEY_WEBHOOK = "webhook_url"

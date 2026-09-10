@@ -70,3 +70,27 @@ and the immediate report both said "not locked". Chosen: `KioskActivity`
 sends `ACTION_REPORT` to the service after starting or stopping lock task, and
 the service reports 750 ms later. Home Assistant's kiosk lock sensor now
 follows within a second instead of at the next heartbeat.
+
+## 2026-09-10: OS updates through SystemUpdatePolicy, not a custom updater
+
+Rejected: polling the OEM for OTA packages and calling `installSystemUpdate`.
+Chosen: `createAutomaticInstallPolicy()`, which tells Android to install a
+system update as soon as the OEM's updater offers it, with no user prompt.
+The tablet can only update as fast as its vendor ships; the DPC cannot make
+Samsung publish sooner. `getPendingSystemUpdate` is reported so Home Assistant
+can see that an update was received and is waiting on the automatic install.
+
+## 2026-09-10: kiosk HOME through an activity-alias
+
+Rejected: a static HOME intent filter on `KioskActivity`. It made the DPC
+answer HOME even after kiosk was turned off, so the launcher never came back.
+Chosen: an `activity-alias` (`KioskHome`) that the engine enables only while
+kiosk is on and registers as the persistent preferred HOME activity. Verified
+with `cmd package resolve-activity` in both states.
+
+## 2026-09-10: app updates by signature continuity, sha256 optional
+
+Android refuses to update an installed package with an APK signed by a
+different key, so a Device Owner install from a URL cannot replace Companion
+with a look-alike. The optional sha256 (GitHub publishes one per asset) adds
+transport integrity only. The route itself is not wired yet; see backlog.

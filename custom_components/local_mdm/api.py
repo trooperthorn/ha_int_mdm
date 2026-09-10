@@ -49,6 +49,13 @@ class DeviceStatus:
     battery_charging: bool | None = None
     wifi_connected: bool | None = None
     reported_at: str | None = None
+    os_release: str | None = None
+    security_patch: str | None = None
+    os_build: str | None = None
+    update_pending: bool | None = None
+    update_received_at: str | None = None
+    installed: dict[str, str | None] = field(default_factory=dict)
+    last_install: dict[str, Any] | None = None
     raw: dict[str, Any] = field(default_factory=dict, compare=False, repr=False)
 
     @property
@@ -69,6 +76,10 @@ class DeviceStatus:
             enforcement = {str(k): str(v) for k, v in (payload.get("enforcement") or {}).items()}
             battery = payload.get("battery") or {}
             network = payload.get("network") or {}
+            os_info = payload.get("os") or {}
+            update = payload.get("system_update") or {}
+            installed = {str(k): _opt_str(v) for k, v in (payload.get("installed") or {}).items()}
+            last_install = payload.get("last_install")
             return cls(
                 device_id=device_id,
                 dpc_version=str(payload.get("dpc_version", "unknown")),
@@ -81,6 +92,13 @@ class DeviceStatus:
                 battery_charging=_opt_bool(battery.get("charging")),
                 wifi_connected=_opt_bool(network.get("wifi_connected")),
                 reported_at=_opt_str(payload.get("reported_at")),
+                os_release=_opt_str(os_info.get("release")),
+                security_patch=_opt_str(os_info.get("security_patch")),
+                os_build=_opt_str(os_info.get("build")),
+                update_pending=_opt_bool(update.get("pending")),
+                update_received_at=_opt_str(update.get("received_at")),
+                installed=installed,
+                last_install=dict(last_install) if isinstance(last_install, dict) else None,
                 raw=payload,
             )
         except (KeyError, TypeError, ValueError, AttributeError) as err:
