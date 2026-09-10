@@ -36,7 +36,7 @@ class MdmService : Service() {
         if (engine.isDeviceOwner) engine.apply(store.policy, store.policyVersion)
         server = HttpServer(PORT, store, engine) { reporter.report() }.also {
             try {
-                it.start(HttpServer.SOCKET_READ_TIMEOUT, false)
+                it.start(fi.iki.elonen.NanoHTTPD.SOCKET_READ_TIMEOUT, false)
             } catch (err: java.io.IOException) {
                 Log.e(TAG, "Cannot bind port $PORT: ${err.message}")
             }

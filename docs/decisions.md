@@ -47,3 +47,17 @@ does not arise.
 `local_` prefix states the design goal. The repository keeps the `ha_int_`
 convention even though it also carries the Android app, because HACS only
 sees the integration.
+
+## 2026-09-10: AGP 9.4.0 on Gradle 9.7.1, no Kotlin plugin
+
+Rejected: AGP 8.13.2 with the Kotlin Android plugin. Gradle 9.6 removed the
+internal `InternalProblems` API that every AGP 8.x release calls, and the
+current Gradle is 9.7.1. Chosen: AGP 9.4.0, which ships built-in Kotlin, so
+`org.jetbrains.kotlin.android` is not declared. The JDK 25 bundled with
+Android Studio runs Gradle 9.7.1; Gradle 8.10.2 refused it.
+
+## 2026-09-10: NanoHTTPD 422 is a private IStatus
+
+NanoHTTPD 2.3.1 has no 422 constant in `Response.Status`; the server defines
+a private `IStatus` for it rather than misusing 400, because the integration
+distinguishes "unsafe or refused" (422) from "malformed" (400).

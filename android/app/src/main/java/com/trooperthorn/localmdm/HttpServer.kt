@@ -46,12 +46,12 @@ class HttpServer(
             Policy.fromJson(body.getJSONObject("policy"), "com.trooperthorn.localmdm")
         } catch (err: Policy.Companion.UnsafePolicy) {
             Log.w(TAG, "Refused unsafe policy: ${err.message}")
-            return text(Response.Status.UNPROCESSABLE_ENTITY, err.message ?: "unsafe policy")
+            return text(UNPROCESSABLE_ENTITY, err.message ?: "unsafe policy")
         } catch (err: Policy.Companion.InvalidPolicy) {
             return text(Response.Status.BAD_REQUEST, err.message ?: "invalid policy")
         }
         if (!engine.isDeviceOwner) {
-            return text(Response.Status.UNPROCESSABLE_ENTITY, "not device owner")
+            return text(UNPROCESSABLE_ENTITY, "not device owner")
         }
         engine.apply(policy, version)
         onReport()
@@ -70,7 +70,7 @@ class HttpServer(
 
     private fun lock(): Response =
         if (engine.lockNow()) json(JSONObject().put("ok", true))
-        else text(Response.Status.UNPROCESSABLE_ENTITY, "lockNow refused")
+        else text(UNPROCESSABLE_ENTITY, "lockNow refused")
 
     private fun readJson(session: IHTTPSession): JSONObject {
         val length = session.headers["content-length"]?.toIntOrNull() ?: 0
@@ -85,10 +85,15 @@ class HttpServer(
         return JSONObject(String(buffer, 0, read, Charsets.UTF_8))
     }
 
+    private object UNPROCESSABLE_ENTITY : Response.IStatus {
+        override fun getRequestStatus(): Int = 422
+        override fun getDescription(): String = "422 Unprocessable Entity"
+    }
+
     private fun json(body: JSONObject): Response =
         newFixedLengthResponse(Response.Status.OK, "application/json", body.toString())
 
-    private fun text(status: Response.Status, body: String): Response =
+    private fun text(status: Response.IStatus, body: String): Response =
         newFixedLengthResponse(status, "text/plain", body)
 
     private fun constantTimeEquals(a: String, b: String): Boolean {
