@@ -61,3 +61,12 @@ Android Studio runs Gradle 9.7.1; Gradle 8.10.2 refused it.
 NanoHTTPD 2.3.1 has no 422 constant in `Response.Status`; the server defines
 a private `IStatus` for it rather than misusing 400, because the integration
 distinguishes "unsafe or refused" (422) from "malformed" (400).
+
+## 2026-09-10: the kiosk activity requests a settled report
+
+Rejected: reporting lock task state from the policy PUT response alone.
+`startLockTask` returns before the system has switched modes, so the response
+and the immediate report both said "not locked". Chosen: `KioskActivity`
+sends `ACTION_REPORT` to the service after starting or stopping lock task, and
+the service reports 750 ms later. Home Assistant's kiosk lock sensor now
+follows within a second instead of at the next heartbeat.

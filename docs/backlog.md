@@ -2,8 +2,9 @@
 
 - 2026-09-10: qualify on a Samsung tablet and Android 14; the emulator pass
   in `live_qualification.md` covers Android 15 only.
-- 2026-09-10: run the integration inside a live Home Assistant against the
-  emulator DPC (config flow, reauth after token rotation, kiosk text entity).
+- 2026-09-10: token rotation from the app followed by reauth in a live Home
+  Assistant (everything else in the live pass is recorded in
+  `live_qualification.md`).
 - 2026-09-10: Zeroconf announcement from the DPC and a discovery step in the
   config flow.
 - 2026-09-10: reconfigure step for host and port changes.
