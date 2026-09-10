@@ -1,0 +1,17 @@
+{
+  "domain": "local_mdm",
+  "name": "Local MDM",
+  "codeowners": [
+    "@trooperthorn"
+  ],
+  "config_flow": true,
+  "dependencies": [
+    "webhook"
+  ],
+  "documentation": "https://github.com/trooperthorn/ha_int_mdm",
+  "integration_type": "device",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/trooperthorn/ha_int_mdm/issues",
+  "requirements": [],
+  "version": "2026.09.10.1"
+}

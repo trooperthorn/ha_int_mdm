@@ -1,0 +1,96 @@
+rules:
+  # Bronze
+  action-setup:
+    status: exempt
+    comment: No custom actions; immediate actions are button entities.
+  appropriate-polling:
+    status: done
+    comment: local_push via webhook; polling is a configurable fallback (default 60 s).
+  brands:
+    status: todo
+    comment: No brand images yet; see docs/backlog.md.
+  common-modules: done
+  config-flow-test-coverage: done
+  config-flow: done
+  dependency-transparency:
+    status: done
+    comment: No runtime requirements beyond core's aiohttp.
+  docs-actions:
+    status: exempt
+    comment: No custom actions.
+  docs-high-level-description: done
+  docs-installation-instructions: done
+  docs-removal-instructions: done
+  entity-event-setup:
+    status: done
+    comment: CoordinatorEntity only; the webhook is registered once per entry.
+  entity-unique-id: done
+  has-entity-name: done
+  runtime-data: done
+  test-before-configure: done
+  test-before-setup: done
+  unique-config-entry: done
+
+  # Silver
+  action-exceptions:
+    status: done
+    comment: Switch and button failures raise HomeAssistantError with the DPC reason.
+  config-entry-unloading: done
+  docs-configuration-parameters: done
+  docs-installation-parameters: done
+  entity-unavailable:
+    status: done
+    comment: CoordinatorEntity availability follows last_update_success.
+  integration-owner: done
+  log-when-unavailable: done
+  parallel-updates:
+    status: todo
+    comment: PARALLEL_UPDATES not yet declared on the platforms.
+  reauthentication-flow: done
+  test-coverage: done
+
+  # Gold
+  devices: done
+  diagnostics: done
+  discovery-update-info:
+    status: exempt
+    comment: No discovery; the DPC has no mDNS or SSDP announcer yet (docs/backlog.md).
+  discovery:
+    status: todo
+    comment: Zeroconf announcement from the DPC is on the backlog.
+  docs-data-update: done
+  docs-examples: done
+  docs-known-limitations: done
+  docs-supported-devices: done
+  docs-supported-functions: done
+  docs-troubleshooting: done
+  docs-use-cases: done
+  dynamic-devices:
+    status: exempt
+    comment: One config entry is one tablet.
+  entity-category: done
+  entity-device-class: done
+  entity-disabled-by-default:
+    status: todo
+    comment: The ten enforced sensors could default to disabled; decide after live use.
+  entity-translations: done
+  exception-translations:
+    status: todo
+    comment: HomeAssistantError messages are literal English.
+  icon-translations: done
+  reconfiguration-flow:
+    status: todo
+    comment: Host and port changes need a reconfigure step; today they need remove and re-add.
+  repair-issues:
+    status: todo
+    comment: A repair issue for "DPC lost Device Owner" would be useful.
+  stale-devices:
+    status: exempt
+    comment: One device per entry; removing the entry removes the device.
+
+  # Platinum
+  async-dependency: done
+  inject-websession: done
+  strict-typing:
+    status: todo
+    comment: mypy runs without --strict.

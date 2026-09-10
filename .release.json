@@ -1,0 +1,10 @@
+{
+  "tag_prefix": "v",
+  "timezone": "America/Chicago",
+  "archive": {"source": "custom_components/local_mdm", "name": "local_mdm.zip"},
+  "release_paths": ["custom_components/local_mdm", "android"],
+  "version_fields": [
+    {"path": "custom_components/local_mdm/manifest.json", "kind": "json", "key": "version"},
+    {"path": "android/app/build.gradle.kts", "kind": "regex", "pattern": "^\\s*versionName = \"([^\"]+)\"", "template": "        versionName = \"{version}\""}
+  ]
+}

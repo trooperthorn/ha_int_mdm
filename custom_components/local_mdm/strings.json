@@ -1,0 +1,87 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to a tablet",
+        "description": "Open the Local MDM app on the tablet. It shows its address and a pairing token once it is Device Owner.",
+        "data": {
+          "host": "Tablet address",
+          "port": "Port",
+          "token": "Pairing token"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Update the pairing token",
+        "description": "The tablet at {host} rejected the stored token. Enter the token shown in the Local MDM app.",
+        "data": {
+          "token": "Pairing token"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "The tablet did not answer. Check the address, the port, and that the Local MDM app is running.",
+      "invalid_auth": "The tablet rejected the token."
+    },
+    "abort": {
+      "already_configured": "This tablet is already configured.",
+      "reauth_successful": "The token was updated.",
+      "wrong_device": "The token belongs to a different tablet than this entry."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Polling fallback",
+        "data": {
+          "scan_interval": "Poll interval"
+        },
+        "data_description": {
+          "scan_interval": "The tablet pushes every change immediately; this poll only catches a missed push."
+        }
+      }
+    }
+  },
+  "entity": {
+    "switch": {
+      "kiosk_mode": { "name": "Kiosk mode" },
+      "camera_disabled": { "name": "Camera disabled" },
+      "screen_capture_disabled": { "name": "Screen capture disabled" },
+      "status_bar_disabled": { "name": "Status bar disabled" },
+      "install_apps_blocked": { "name": "App installs blocked" },
+      "uninstall_apps_blocked": { "name": "App uninstalls blocked" },
+      "usb_file_transfer_blocked": { "name": "USB file transfer blocked" },
+      "adjust_volume_blocked": { "name": "Volume changes blocked" },
+      "safe_boot_blocked": { "name": "Safe boot blocked" },
+      "factory_reset_blocked": { "name": "Factory reset blocked" }
+    },
+    "binary_sensor": {
+      "device_owner": { "name": "Device owner" },
+      "kiosk_active": { "name": "Kiosk lock" },
+      "enforcement_problem": { "name": "Enforcement problem" },
+      "wifi_connected": { "name": "Wi-Fi" },
+      "battery_charging": { "name": "Charging" },
+      "kiosk_mode_enforced": { "name": "Kiosk mode enforced" },
+      "camera_disabled_enforced": { "name": "Camera disabled enforced" },
+      "screen_capture_disabled_enforced": { "name": "Screen capture disabled enforced" },
+      "status_bar_disabled_enforced": { "name": "Status bar disabled enforced" },
+      "install_apps_blocked_enforced": { "name": "App installs blocked enforced" },
+      "uninstall_apps_blocked_enforced": { "name": "App uninstalls blocked enforced" },
+      "usb_file_transfer_blocked_enforced": { "name": "USB file transfer blocked enforced" },
+      "adjust_volume_blocked_enforced": { "name": "Volume changes blocked enforced" },
+      "safe_boot_blocked_enforced": { "name": "Safe boot blocked enforced" },
+      "factory_reset_blocked_enforced": { "name": "Factory reset blocked enforced" }
+    },
+    "sensor": {
+      "policy_version": { "name": "Policy version" },
+      "dpc_version": { "name": "DPC version" },
+      "enforcement_failures": { "name": "Enforcement failures" },
+      "last_report": { "name": "Last report" }
+    },
+    "button": {
+      "lock_screen": { "name": "Lock screen" }
+    },
+    "text": {
+      "kiosk_packages": { "name": "Kiosk packages" }
+    }
+  }
+}
