@@ -29,8 +29,28 @@ the Android Studio JDK 25.
 | Wi-Fi remains user-configurable under every policy | `dumpsys user` restriction list contains no `no_config_wifi`, `no_network_reset`, or `no_debugging_features` while all nine flags are on | pass |
 | adb remains available under every policy | adb kept working throughout, including the reboot | pass |
 
+## 2026-09-10: inside a live Home Assistant 2026.9.0 (WSL) against the emulator DPC
+
+Driver: `~/workspace/mdm-live/drive_ha.py` over the REST API on a fresh config
+directory with the integration symlinked in; HA reached the DPC through
+`adb -a` on the Windows host and the DPC reached HA at the WSL address.
+
+| Check | How | Result |
+| --- | --- | --- |
+| Config flow | `POST /api/config/config_entries/flow` with host, port, token | pass, entry created, 33 entities |
+| Webhook registration | DPC report arrives at `/api/webhook/<id>` from the emulator | pass |
+| Acceptance round trip | `input_boolean` on, automation calls the camera switch, DPC applies, report received, `camera_disabled_enforced` on and `last_report` advanced | pass, 108 ms |
+| Switch attributes | `enforcement: applied`, `reported_value: true`, `policy_version` advanced | pass |
+| Off path | helper off, switch and enforced sensor off, problem sensor off | pass |
+| Kiosk without packages | switch call raises `HomeAssistantError`, nothing sent | pass |
+| Kiosk with packages | text entity set, switch on, `kiosk lock` sensor locked within 1 s; switch off releases within 1 s | pass, after the settled-report fix below |
+| Poll fallback | coordinator refresh at 60 s logged success | pass |
+
+Found and fixed during this pass: the DPC answered the policy PUT and sent its
+report before lock task mode had engaged, so the `kiosk lock` sensor in Home
+Assistant stayed unlocked until the five-minute heartbeat. `KioskActivity` now
+asks the service for a report 750 ms after `startLockTask` or `stopLockTask`.
+
 Not yet observed: a Samsung tablet, Android 14, the kiosk hand-off when the
-target package is a third-party dashboard app, token rotation from the app's
-button followed by a reauth in a live Home Assistant, and the integration
-itself running inside Home Assistant against the DPC (the client and the
-webhook path were exercised outside Home Assistant).
+target package is a third-party dashboard app, and token rotation from the
+app's button followed by a reauth in a live Home Assistant.

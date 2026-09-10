@@ -23,11 +23,13 @@ class KioskActivity : Activity() {
     private fun handle(intent: Intent) {
         if (intent.getBooleanExtra(EXTRA_STOP, false)) {
             runCatching { stopLockTask() }
+            MdmService.requestReport(this)
             finishAndRemoveTask()
             return
         }
         val target = intent.getStringExtra(EXTRA_TARGET) ?: return finish()
         runCatching { startLockTask() }
+        MdmService.requestReport(this)
         packageManager.getLaunchIntentForPackage(target)?.let { launch ->
             startActivity(launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         }

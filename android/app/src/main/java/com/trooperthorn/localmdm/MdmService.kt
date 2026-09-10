@@ -44,7 +44,14 @@ class MdmService : Service() {
         handler.post(heartbeat)
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == ACTION_REPORT) {
+            // Lock task state settles a moment after startLockTask/stopLockTask
+            // return; report once it has, so Home Assistant sees the real value.
+            handler.postDelayed({ reporter.report() }, SETTLE_MS)
+        }
+        return START_STICKY
+    }
 
     override fun onDestroy() {
         handler.removeCallbacks(heartbeat)
@@ -73,9 +80,17 @@ class MdmService : Service() {
         private const val CHANNEL = "local_mdm"
         private const val NOTIFICATION_ID = 1
         private const val HEARTBEAT_MS = 5 * 60 * 1000L
+        private const val SETTLE_MS = 750L
+        const val ACTION_REPORT = "com.trooperthorn.localmdm.REPORT"
 
         fun start(context: Context) {
             context.startForegroundService(Intent(context, MdmService::class.java))
+        }
+
+        fun requestReport(context: Context) {
+            context.startForegroundService(
+                Intent(context, MdmService::class.java).setAction(ACTION_REPORT),
+            )
         }
     }
 }
