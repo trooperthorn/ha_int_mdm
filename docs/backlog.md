@@ -16,3 +16,8 @@
   suspension.
 - 2026-09-10: signed release APK as a release asset (needs a signing key
   held outside the repository).
+- 2026-09-11: Samsung's FOTA agent does not report through
+  `getPendingSystemUpdate` (a real Tab A11+ update went from build
+  X230XXU4BZE8 to X230XXS5BZF2 with `pending: false` throughout). Consider
+  reading the updater's posted notification or Samsung's Knox update API to
+  surface "update available" on One UI.
