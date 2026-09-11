@@ -160,6 +160,19 @@ SYSTEM_ALERT_WINDOW app ops). Over `adb forward`:
   systemui window events to the service but never the launcher's, even
   with typeWindowsChanged and interactive-window retrieval.
 - Home Assistant test `test_lite_tier_limits_are_not_failures` covers the
-  tier sensors; not yet paired live (no Wi-Fi on the Fire and no Companion
-  APK installed at the time).
+  tier sensors.
+- Live on Home Assistant with Local MDM v2026.09.11.4 (Fire on Wi-Fi,
+  192.168.30.69): `install_package` with the Companion 2026.6.5 minimal
+  APK (after PR #27) showed the platform dialog, `last_install` went
+  `awaiting_user` then `installed`, package
+  io.homeassistant.companion.android.minimal (the `.minimal` suffix matters
+  for `kiosk_packages`). Config flow created the entry; `management_tier`
+  = admin, `policies_limited_by_tier` = 10 (kiosk_mode limited, nine
+  unsupported), `enforcement_failures` = 0, stay-awake enforced. Starting
+  com.amazon.firelauncher/.Launcher by component logged the HomeWatch
+  redirect and Companion was back in front within a second. The generic
+  HOME intent on an unregistered Fire resolves to Amazon's OOBE activity,
+  which adb cannot start (MANAGE_USERS). Open: a `switch.turn_on` naming two
+  switches in one call only applied the first; the second took on a single
+  call. Not reproduced yet.
 
