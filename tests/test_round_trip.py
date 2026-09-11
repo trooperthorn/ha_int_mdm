@@ -277,3 +277,39 @@ async def test_drifted_report_is_repushed(
     await _post_webhook(hass, hass_client_no_auth, stale)
     await hass.async_block_till_done()
     assert len(fake_client.policy_calls) == pushes + 1
+
+
+async def test_lite_tier_limits_are_not_failures(
+    hass, setup_entry, fake_client: FakeClient, hass_client_no_auth
+):
+    """A device-admin tablet reports limited/unsupported keys; HA shows them as tier limits."""
+    base = status_payload()
+    enforcement = dict.fromkeys(base["enforcement"], "unsupported")
+    enforcement.update(
+        {"kiosk_mode": "applied", "camera_disabled": "applied", "wifi_always_on": "applied"}
+    )
+    lite = status_payload(is_device_owner=False, tier="admin", enforcement=enforcement)
+    await _post_webhook(hass, hass_client_no_auth, lite)
+    assert hass.states.get("sensor.tablet_tablet_kitchen_management_tier").state == "admin"
+    assert hass.states.get(PROBLEM).state == STATE_OFF
+    assert hass.states.get("sensor.tablet_tablet_kitchen_enforcement_failures").state == "0"
+    limited = hass.states.get("sensor.tablet_tablet_kitchen_policies_limited_by_tier")
+    assert limited.state == "10"
+    assert limited.attributes["detail"]["status_bar_disabled"] == "unsupported"
+    # A limited kiosk never lights the enforced sensor even when the flag is on.
+    on = status_payload(
+        is_device_owner=False,
+        tier="admin",
+        policy={
+            **base["policy"],
+            "kiosk_mode": True,
+            "kiosk_packages": ["io.homeassistant.companion.android"],
+        },
+        enforcement={**enforcement, "kiosk_mode": "limited"},
+    )
+    await _post_webhook(hass, hass_client_no_auth, on)
+    assert (
+        hass.states.get("binary_sensor.tablet_tablet_kitchen_kiosk_mode_enforced").state
+        == STATE_OFF
+    )
+    assert hass.states.get(PROBLEM).state == STATE_OFF

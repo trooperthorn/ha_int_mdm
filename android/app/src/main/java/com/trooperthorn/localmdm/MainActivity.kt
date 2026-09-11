@@ -29,7 +29,11 @@ class MainActivity : Activity() {
 
     private fun render() {
         findViewById<TextView>(R.id.ownerState).text =
-            getString(if (engine.isDeviceOwner) R.string.owner_yes else R.string.owner_no)
+            when (engine.tier) {
+                PolicyEngine.TIER_OWNER -> getString(R.string.owner_yes)
+                PolicyEngine.TIER_ADMIN -> getString(R.string.tier_admin)
+                else -> getString(R.string.owner_no)
+            }
         findViewById<TextView>(R.id.address).text =
             "Address: ${Network.localAddress() ?: "no network"}  Port: ${MdmService.PORT}"
         findViewById<TextView>(R.id.token).text = store.token

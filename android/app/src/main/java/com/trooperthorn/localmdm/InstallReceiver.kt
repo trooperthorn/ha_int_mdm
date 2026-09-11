@@ -10,9 +10,17 @@ class InstallReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)
         if (status == PackageInstaller.STATUS_PENDING_USER_ACTION) {
-            // A Device Owner install never needs this; if it appears, the DPC
-            // is not Device Owner and the install cannot proceed silently.
-            Installer.current?.finished(PackageInstaller.STATUS_FAILURE, "user action required; not device owner", null, intent.getStringExtra(EXTRA_URL))
+            // Only reached without Device Owner (lite tier): Android wants the
+            // user to confirm. Show the dialog and report that it is waiting;
+            // the final status arrives through this receiver afterwards.
+            @Suppress("DEPRECATION")
+            val confirm = intent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
+            if (confirm != null) {
+                context.startActivity(confirm.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                Installer.current?.awaitingUser(intent.getStringExtra(EXTRA_URL))
+            } else {
+                Installer.current?.finished(PackageInstaller.STATUS_FAILURE, "user action required", null, intent.getStringExtra(EXTRA_URL))
+            }
             return
         }
         Installer.current?.finished(

@@ -98,6 +98,12 @@ class Installer(
     }
 
     /** Called by InstallReceiver with the session result. */
+    /** Lite tier: the platform is showing its confirmation dialog. */
+    fun awaitingUser(url: String?) {
+        record("awaiting_user", url ?: "", "confirm the install on the tablet")
+        onReport()
+    }
+
     fun finished(status: Int, message: String?, packageName: String?, url: String?) {
         val outcome = if (status == PackageInstaller.STATUS_SUCCESS) "installed" else "failed"
         record(outcome, url, message, packageName)
