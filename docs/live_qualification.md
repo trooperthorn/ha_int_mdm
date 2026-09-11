@@ -77,6 +77,20 @@ Android 11 and newer could neither read another package's version nor obtain
 its launch intent, so the version sensor read unknown and kiosk engaged
 around whatever task was already on screen.
 
-Not yet observed: a Samsung tablet, Android 14, a real pending OS update on
-hardware, and a Companion update (same package, newer version) rather than a
-first install.
+## 2026-09-11: Samsung Galaxy Tab A11+ (SM-X230), Android 16, One UI, as a plain app
+
+The tablet still carried its accounts, so Device Owner could not be set;
+this pass covers what the DPC does before provisioning.
+
+| Check | How | Result |
+| --- | --- | --- |
+| Foreground service and endpoint on Android 16 (SDK 36) | `dumpsys activity services` lists MdmService; `/v1/status` answers with os, battery, network | pass |
+| Status reports the tablet correctly | model SM-X230, release 16, security patch 2026-05-05, Wi-Fi connected, battery 79 percent charging | pass |
+| Bad token | 401 | pass |
+| Forbidden key refused before any policy work | `no_config_wifi` gives 422 with the guard's message | pass |
+| Policy and install refused when not Device Owner | both 422 "not device owner" | pass |
+| Knox state before provisioning | warranty bit 0, verified boot green (the DPC needs neither root nor an unlocked bootloader) | pass |
+
+Not yet observed: this tablet as Device Owner (needs a factory reset with no
+accounts added), a real pending OS update, Android 14, and a Companion update
+over an existing install.
