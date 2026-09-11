@@ -23,3 +23,5 @@
   surface "update available" on One UI.
 
 - Kiosk lock splash: done 2026-09-11 (`KioskActivity` shows the chained shield and MDM MANAGED for 2 s before launching the kiosk package, at boot and on re-assert). Boot-logo background in docs/knox-sdk-assessment.md.
+- Reboot route answers after the reboot starts: `POST /v1/actions/reboot` calls `dpm.reboot` before NanoHTTPD writes the response, so Home Assistant's button press gets a 500 even though the tablet restarts. Write `{ok:true}`, then reboot from a 500 ms delayed handler.
+- Fire OS 7 (Android 9, API 28) support: `Wifi.kt` uses `addNetworkPrivileged` (API 31) and `setLocationEnabled` (API 30) without version guards; add the legacy `WifiManager.addNetwork` path and guard the location call before qualifying a Fire HD 8 Plus (2020) as Device Owner.
