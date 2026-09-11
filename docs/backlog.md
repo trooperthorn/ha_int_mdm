@@ -1,7 +1,8 @@
 # Backlog
 
-- 2026-09-10: qualify on a Samsung tablet and Android 14; the emulator pass
-  in `live_qualification.md` covers Android 15 only.
+- 2026-09-11: confirm the adb dialog appears inside kiosk with the shell
+  allow-list fix (needs a tablet with a revoked adb key and kiosk on).
+- 2026-09-11: qualify on Android 14.
 - 2026-09-10: Zeroconf announcement from the DPC and a discovery step in the
   config flow.
 - 2026-09-10: reconfigure step for host and port changes.

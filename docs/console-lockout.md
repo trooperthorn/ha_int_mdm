@@ -17,6 +17,7 @@ Set once per tablet after pairing:
 | `text.<tablet>_kiosk_packages` | `io.homeassistant.companion.android` | Companion is the only application allowed in lock task, and the DPC becomes HOME so a reboot lands in Companion |
 | `switch.<tablet>_kiosk_mode` | on | Lock task: no home, no recents, no other apps, no notification shade beyond what `setLockTaskFeatures` allows |
 | `switch.<tablet>_automatic_os_updates` | on | Android installs OS updates as soon as the vendor offers them |
+| `switch.<tablet>_wifi_always_on` | on | The radio never stays off; the management path survives a user or app turning it off |
 | `switch.<tablet>_stay_awake_on_power` | on | A wall tablet on power never times out; brightness is still Companion's to manage |
 | `switch.<tablet>_status_bar_disabled` | on | No quick settings pull-down |
 | `switch.<tablet>_app_installs_blocked`, `_app_uninstalls_blocked` | on | Nothing arrives or leaves except through the DPC |
@@ -84,10 +85,14 @@ for `installed` or `failed` with its `message` attribute.
 ## Provisioning order for a new wall tablet
 
 1. Factory reset, skip accounts, enable USB debugging.
-2. Install the DPC and the Companion APK (`app-full-release.apk` from the
+2. Enable developer options and USB debugging, plug in, and tick "Always
+   allow from this computer" on the adb prompt before anything else: the
+   key must be persisted before the first kiosk.
+3. Install the DPC and the Companion APK (`app-full-release.apk` from the
    release matching the version you want), then `dpm set-device-owner`.
-3. Open Companion once and sign in to Home Assistant as the tablet's
+4. Optionally run `local_mdm.configure_wifi` from the Home Assistant UI so
+   the tablet knows the wall network; then open Companion once and sign in to Home Assistant as the tablet's
    non-admin user; set the console dashboard as its default.
-4. Pair the DPC with Home Assistant and apply the standing policy above.
-5. Reboot the tablet and confirm it comes back inside Companion with the
+5. Pair the DPC with Home Assistant and apply the standing policy above.
+6. Reboot the tablet (the `Reboot` button) and confirm it comes back inside Companion with the
    `kiosk lock` sensor showing locked.

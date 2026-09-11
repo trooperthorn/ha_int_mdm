@@ -101,3 +101,25 @@ release on the emulator.
 Rejected: `QUERY_ALL_PACKAGES`. Chosen: a `<queries>` element for the
 MAIN/LAUNCHER intent, which is exactly the set the DPC needs (apps it can
 put in kiosk and report versions for).
+
+## 2026-09-11: the shell package is always in the lock task allow list
+
+On a Galaxy Tab A11+ the "Allow USB debugging?" dialog never appeared inside
+kiosk, because it is an activity of `com.android.shell` and lock task blocks
+activities from packages outside the allow list. adb is the documented
+recovery path, so the DPC now adds the shell package unconditionally.
+
+## 2026-09-11: Wi-Fi provisioning adds, never switches
+
+`enableNetwork(id, true)` tells Android to disable every other network and
+try the new one now; on the Samsung that took the tablet off the LAN for a
+few seconds and, with a wrong password, would have stranded it. The DPC
+passes `false` and lets Android pick the new network when the current one is
+gone. The password is handed to Android and not retained.
+
+## 2026-09-11: a reboot action
+
+Rejected: relying on adb to reboot a tablet during qualification. Chosen:
+`DevicePolicyManager.reboot`, exposed as a Home Assistant button, because
+the whole point of the design is that adb is a recovery path, not a control
+path.

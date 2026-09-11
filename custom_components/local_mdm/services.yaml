@@ -15,3 +15,25 @@ install_package:
       example: "c14a0a15ea6e4ff4f37993f6d621f99cac8614d59312866e7c95fd8f65af4c04"
       selector:
         text:
+configure_wifi:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: local_mdm
+    ssid:
+      required: true
+      example: "IoT-Tablets"
+      selector:
+        text:
+    password:
+      required: false
+      selector:
+        text:
+          type: password
+    hidden:
+      required: false
+      default: false
+      selector:
+        boolean:

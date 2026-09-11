@@ -36,6 +36,9 @@
       },
       "stay_awake_on_power": {
         "default": "mdi:power-plug"
+      },
+      "wifi_always_on": {
+        "default": "mdi:wifi-check"
       }
     },
     "binary_sensor": {
@@ -80,6 +83,9 @@
       },
       "stay_awake_on_power_enforced": {
         "default": "mdi:power-plug"
+      },
+      "wifi_always_on_enforced": {
+        "default": "mdi:wifi-check"
       }
     },
     "sensor": {
@@ -106,11 +112,17 @@
       },
       "last_install": {
         "default": "mdi:package-down"
+      },
+      "wifi_ssid": {
+        "default": "mdi:wifi"
       }
     },
     "button": {
       "lock_screen": {
         "default": "mdi:lock"
+      },
+      "reboot": {
+        "default": "mdi:restart"
       }
     },
     "text": {
@@ -122,6 +134,9 @@
   "services": {
     "install_package": {
       "service": "mdi:package-down"
+    },
+    "configure_wifi": {
+      "service": "mdi:wifi-plus"
     }
   }
 }

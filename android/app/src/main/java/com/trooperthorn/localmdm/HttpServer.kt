@@ -28,6 +28,9 @@ class HttpServer(
                 path == "/v1/webhook" && session.method == Method.PUT -> putWebhook(session)
                 path == "/v1/actions/lock_screen" && session.method == Method.POST -> lock()
                 path == "/v1/actions/install_package" && session.method == Method.POST -> install(session)
+                path == "/v1/actions/configure_wifi" && session.method == Method.POST -> configureWifi(session)
+                path == "/v1/actions/reboot" && session.method == Method.POST ->
+                    if (engine.reboot()) json(JSONObject().put("ok", true)) else text(UNPROCESSABLE_ENTITY, "reboot refused")
                 else -> text(Response.Status.NOT_FOUND, "not found")
             }
         } catch (err: JSONException) {
@@ -89,6 +92,25 @@ class HttpServer(
             return text(UNPROCESSABLE_ENTITY, "an install is already running")
         }
         return newFixedLengthResponse(ACCEPTED, "application/json", JSONObject().put("ok", true).toString())
+    }
+
+    private fun configureWifi(session: IHTTPSession): Response {
+        val body = readJson(session)
+        val ssid = body.optString("ssid", "")
+        if (ssid.isEmpty() || ssid.length > 32) return text(Response.Status.BAD_REQUEST, "ssid must be 1 to 32 characters")
+        val password = body.optString("password", "").ifEmpty { null }
+        if (password != null && password.length !in 8..63) {
+            return text(Response.Status.BAD_REQUEST, "password must be 8 to 63 characters")
+        }
+        if (!engine.isDeviceOwner) return text(UNPROCESSABLE_ENTITY, "not device owner")
+        return try {
+            val id = engine.wifiControl.configure(ssid, password, body.optBoolean("hidden", false))
+            onReport()
+            json(JSONObject().put("ok", true).put("network_id", id))
+        } catch (err: RuntimeException) {
+            Log.e(TAG, "configure_wifi failed: ${err.message}")
+            text(UNPROCESSABLE_ENTITY, err.message ?: "configure_wifi failed")
+        }
     }
 
     private object ACCEPTED : Response.IStatus {

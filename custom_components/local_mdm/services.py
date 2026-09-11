@@ -45,7 +45,30 @@ async def _install_package(call: ServiceCall) -> None:
     await coordinator.async_install_package(call.data[ATTR_URL], call.data.get(ATTR_SHA256))
 
 
+SERVICE_CONFIGURE_WIFI = "configure_wifi"
+ATTR_SSID = "ssid"
+ATTR_PASSWORD = "password"
+ATTR_HIDDEN = "hidden"
+
+WIFI_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_DEVICE_ID): cv.string,
+        vol.Required(ATTR_SSID): vol.All(cv.string, vol.Length(min=1, max=32)),
+        vol.Optional(ATTR_PASSWORD): vol.All(cv.string, vol.Length(min=8, max=63)),
+        vol.Optional(ATTR_HIDDEN, default=False): cv.boolean,
+    }
+)
+
+
+async def _configure_wifi(call: ServiceCall) -> None:
+    coordinator = _coordinator_for_device(call.hass, call.data[ATTR_DEVICE_ID])
+    await coordinator.async_configure_wifi(
+        call.data[ATTR_SSID], call.data.get(ATTR_PASSWORD), call.data[ATTR_HIDDEN]
+    )
+
+
 @callback
 def async_setup_services(hass: HomeAssistant) -> None:
     """Register the integration's actions once."""
     hass.services.async_register(DOMAIN, SERVICE_INSTALL_PACKAGE, _install_package, INSTALL_SCHEMA)
+    hass.services.async_register(DOMAIN, SERVICE_CONFIGURE_WIFI, _configure_wifi, WIFI_SCHEMA)

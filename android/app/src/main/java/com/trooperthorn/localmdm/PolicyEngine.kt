@@ -25,6 +25,8 @@ class PolicyEngine(private val context: Context, private val store: PolicyStore)
     private val dpm = context.getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
     private val admin = ComponentName(context, MdmDeviceAdminReceiver::class.java)
 
+    val wifiControl = Wifi(context)
+
     val isDeviceOwner: Boolean get() = dpm.isDeviceOwnerApp(context.packageName)
 
     fun apply(policy: Policy, version: Int): Map<String, String> {
@@ -66,6 +68,11 @@ class PolicyEngine(private val context: Context, private val store: PolicyStore)
                 if (policy.stayAwakeOnPower) "7" else "0",
             )
         }
+        result[Policy.KEY_WIFI_ALWAYS_ON] = attempt {
+            if (policy.wifiAlwaysOn && !wifiControl.ensureEnabled()) {
+                throw IllegalStateException("setWifiEnabled refused")
+            }
+        }
         result[Policy.KEY_KIOSK_MODE] = attempt { applyKiosk(policy) }
 
         store.policy = policy
@@ -77,7 +84,10 @@ class PolicyEngine(private val context: Context, private val store: PolicyStore)
     private fun applyKiosk(policy: Policy) {
         // The DPC stays in the allow list so KioskActivity can start and stop
         // lock task mode; the guard already removed it from the user's list.
-        val allowed = (policy.kioskPackages + context.packageName).toTypedArray()
+        // com.android.shell owns the "Allow USB debugging?" dialog; without it in
+        // the allow list, lock task hides the prompt and adb (the recovery path)
+        // is unusable after a reboot. Found on a Galaxy Tab A11+ on 2026-09-11.
+        val allowed = (policy.kioskPackages + context.packageName + ADB_SHELL_PACKAGE).toTypedArray()
         dpm.setLockTaskPackages(admin, if (policy.kioskMode) allowed else emptyArray())
         // While kiosk is on, KioskActivity is the HOME app so a reboot or a
         // home press lands back in lock task with the target application.
@@ -130,6 +140,14 @@ class PolicyEngine(private val context: Context, private val store: PolicyStore)
         "failed"
     }
 
+    fun reboot(): Boolean = try {
+        dpm.reboot(admin)
+        true
+    } catch (err: RuntimeException) {
+        Log.e(TAG, "reboot refused: ${err.message}")
+        false
+    }
+
     fun lockNow(): Boolean = try {
         dpm.lockNow()
         true
@@ -156,7 +174,13 @@ class PolicyEngine(private val context: Context, private val store: PolicyStore)
             put("enforcement", JSONObject(store.enforcement))
             put("lock_task_active", isLockTaskActive())
             put("battery", JSONObject().put("level", level).put("charging", charging))
-            put("network", JSONObject().put("wifi_connected", Network.isWifiConnected(context)))
+            put(
+                "network",
+                JSONObject()
+                    .put("wifi_connected", Network.isWifiConnected(context))
+                    .put("wifi_enabled", wifiControl.isEnabled())
+                    .put("ssid", wifiControl.connectedSsid() ?: JSONObject.NULL),
+            )
             put("os", osInfo())
             put("system_update", systemUpdateInfo())
             put("installed", installedVersions())
@@ -201,5 +225,6 @@ class PolicyEngine(private val context: Context, private val store: PolicyStore)
 
     companion object {
         private const val TAG = "LocalMdm.Policy"
+        private const val ADB_SHELL_PACKAGE = "com.android.shell"
     }
 }

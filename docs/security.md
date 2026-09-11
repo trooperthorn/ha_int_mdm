@@ -33,6 +33,18 @@ adb under any policy; that is the documented recovery path.
 path. The recovery-mode wipe still works, so the tablet is always recoverable
 by someone with physical access, which is the intended floor.
 
+## Wi-Fi provisioning
+
+`configure_wifi` hands a network to Android's configured-network store and
+returns. Neither the DPC nor Home Assistant keeps the password: it is not in
+the policy document, not in a config entry, and not in any entity attribute
+(the test suite asserts the last point). The user's own Wi-Fi settings stay
+unlocked, and a new network is added without dropping the current one, so a
+wrong password from the control plane leaves the tablet where it was. The
+DPC grants itself fine location and turns the device location toggle on, which
+Android requires before any app may read the connected SSID; that is the only
+reason it holds the permission.
+
 ## What this is not
 
 - Not a defense against a hostile Home Assistant. Anyone who can call the

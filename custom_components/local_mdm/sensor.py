@@ -89,6 +89,12 @@ SENSORS: tuple[LocalMdmSensorDescription, ...] = (
         value_fn=lambda s: next(iter(s.installed.values()), None),
     ),
     LocalMdmSensorDescription(
+        key="wifi_ssid",
+        translation_key="wifi_ssid",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda s: s.wifi_ssid,
+    ),
+    LocalMdmSensorDescription(
         key="last_install",
         translation_key="last_install",
         entity_category=EntityCategory.DIAGNOSTIC,

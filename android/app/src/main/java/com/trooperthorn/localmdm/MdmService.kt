@@ -33,7 +33,10 @@ class MdmService : Service() {
         startForeground(NOTIFICATION_ID, notification())
         // Re-assert the stored policy on every start: user restrictions
         // survive reboot, lock task mode does not.
-        if (engine.isDeviceOwner) engine.apply(store.policy, store.policyVersion)
+        if (engine.isDeviceOwner) {
+            engine.wifiControl.grantLocationToSelf()
+            engine.apply(store.policy, store.policyVersion)
+        }
         val installer = Installer(this, store) { reporter.report() }
         server = HttpServer(PORT, store, engine, { reporter.report() }, installer).also {
             try {

@@ -48,6 +48,8 @@ class DeviceStatus:
     battery_level: int | None = None
     battery_charging: bool | None = None
     wifi_connected: bool | None = None
+    wifi_enabled: bool | None = None
+    wifi_ssid: str | None = None
     reported_at: str | None = None
     os_release: str | None = None
     security_patch: str | None = None
@@ -91,6 +93,8 @@ class DeviceStatus:
                 battery_level=_opt_int(battery.get("level")),
                 battery_charging=_opt_bool(battery.get("charging")),
                 wifi_connected=_opt_bool(network.get("wifi_connected")),
+                wifi_enabled=_opt_bool(network.get("wifi_enabled")),
+                wifi_ssid=_opt_str(network.get("ssid")),
                 reported_at=_opt_str(payload.get("reported_at")),
                 os_release=_opt_str(os_info.get("release")),
                 security_patch=_opt_str(os_info.get("security_patch")),
@@ -183,6 +187,10 @@ class LocalMdmClient:
         """Lock the tablet screen immediately."""
         await self._request("POST", "/actions/lock_screen")
 
+    async def async_reboot(self) -> None:
+        """Reboot the tablet (Device Owner only)."""
+        await self._request("POST", "/actions/reboot")
+
     async def async_install_package(self, url: str, sha256: str | None = None) -> None:
         """Ask the DPC to download and silently install an APK.
 
@@ -193,6 +201,13 @@ class LocalMdmClient:
         if sha256:
             body["sha256"] = sha256.lower().removeprefix("sha256:")
         await self._request("POST", "/actions/install_package", body)
+
+    async def async_configure_wifi(self, ssid: str, password: str | None, hidden: bool) -> None:
+        """Hand a Wi-Fi network to the tablet; Android stores it, the DPC does not."""
+        body: dict[str, Any] = {"ssid": ssid, "hidden": hidden}
+        if password:
+            body["password"] = password
+        await self._request("POST", "/actions/configure_wifi", body)
 
 
 async def _safe_text(response: aiohttp.ClientResponse) -> str:

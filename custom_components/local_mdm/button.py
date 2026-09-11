@@ -11,6 +11,12 @@ from .coordinator import LocalMdmConfigEntry
 from .entity import LocalMdmEntity
 
 LOCK_SCREEN = ButtonEntityDescription(key="lock_screen", translation_key="lock_screen")
+REBOOT = ButtonEntityDescription(
+    key="reboot",
+    translation_key="reboot",
+    device_class=ButtonDeviceClass.RESTART,
+    entity_category=EntityCategory.CONFIG,
+)
 REFRESH = ButtonEntityDescription(
     key="refresh",
     device_class=ButtonDeviceClass.UPDATE,
@@ -28,6 +34,7 @@ async def async_setup_entry(
     async_add_entities(
         [
             LocalMdmLockScreenButton(coordinator, LOCK_SCREEN),
+            LocalMdmRebootButton(coordinator, REBOOT),
             LocalMdmRefreshButton(coordinator, REFRESH),
         ]
     )
@@ -45,3 +52,10 @@ class LocalMdmRefreshButton(LocalMdmEntity, ButtonEntity):
 
     async def async_press(self) -> None:
         await self.coordinator.async_request_refresh()
+
+
+class LocalMdmRebootButton(LocalMdmEntity, ButtonEntity):
+    """Reboot the tablet; kiosk and every policy re-apply on boot."""
+
+    async def async_press(self) -> None:
+        await self.coordinator.async_reboot()
