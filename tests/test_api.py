@@ -37,6 +37,8 @@ class FakeDpc:
         app.router.add_put("/v1/webhook", self.put_webhook)
         app.router.add_post("/v1/actions/lock_screen", self.lock)
         app.router.add_post("/v1/actions/install_package", self.install)
+        app.router.add_post("/v1/actions/configure_wifi", self.install)
+        app.router.add_post("/v1/actions/reboot", self.lock)
         return app
 
     @web.middleware
@@ -133,6 +135,8 @@ async def test_webhook_and_lock(dpc):
     client = _client(http)
     await client.async_set_webhook("http://ha.local:8123/api/webhook/abc")
     await client.async_lock_screen()
+    await client.async_reboot()
+    assert fake.received[2] == ("POST", "/v1/actions/reboot", None)
     assert fake.received[0] == (
         "PUT",
         "/v1/webhook",
@@ -174,3 +178,13 @@ async def test_install_package_normalizes_digest(dpc):
     )
     await _client(http).async_install_package("https://example.invalid/app.apk")
     assert fake.received[-1][2] == {"url": "https://example.invalid/app.apk"}
+
+
+async def test_configure_wifi_omits_empty_password(dpc):
+    fake, http = dpc
+    await _client(http).async_configure_wifi("Net", None, True)
+    assert fake.received[-1] == (
+        "POST",
+        "/v1/actions/configure_wifi",
+        {"ssid": "Net", "hidden": True},
+    )

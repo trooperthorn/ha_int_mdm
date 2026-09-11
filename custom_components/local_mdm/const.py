@@ -33,6 +33,7 @@ POLICY_SAFE_BOOT_BLOCKED: Final = "safe_boot_blocked"
 POLICY_FACTORY_RESET_BLOCKED: Final = "factory_reset_blocked"
 POLICY_AUTO_OS_UPDATES: Final = "auto_os_updates"
 POLICY_STAY_AWAKE_ON_POWER: Final = "stay_awake_on_power"
+POLICY_WIFI_ALWAYS_ON: Final = "wifi_always_on"
 
 POLICY_FLAGS: Final[tuple[str, ...]] = (
     POLICY_KIOSK_MODE,
@@ -47,6 +48,7 @@ POLICY_FLAGS: Final[tuple[str, ...]] = (
     POLICY_FACTORY_RESET_BLOCKED,
     POLICY_AUTO_OS_UPDATES,
     POLICY_STAY_AWAKE_ON_POWER,
+    POLICY_WIFI_ALWAYS_ON,
 )
 
 COMPANION_PACKAGE: Final = "io.homeassistant.companion.android"

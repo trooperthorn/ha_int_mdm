@@ -21,6 +21,7 @@ data class Policy(
     val factoryResetBlocked: Boolean = false,
     val autoOsUpdates: Boolean = false,
     val stayAwakeOnPower: Boolean = false,
+    val wifiAlwaysOn: Boolean = false,
     val kioskPackages: List<String> = emptyList(),
 ) {
     fun toJson(): JSONObject = JSONObject().apply {
@@ -36,6 +37,7 @@ data class Policy(
         put(KEY_FACTORY_RESET_BLOCKED, factoryResetBlocked)
         put(KEY_AUTO_OS_UPDATES, autoOsUpdates)
         put(KEY_STAY_AWAKE_ON_POWER, stayAwakeOnPower)
+        put(KEY_WIFI_ALWAYS_ON, wifiAlwaysOn)
         put(KEY_KIOSK_PACKAGES, JSONArray(kioskPackages))
     }
 
@@ -52,6 +54,7 @@ data class Policy(
         const val KEY_FACTORY_RESET_BLOCKED = "factory_reset_blocked"
         const val KEY_AUTO_OS_UPDATES = "auto_os_updates"
         const val KEY_STAY_AWAKE_ON_POWER = "stay_awake_on_power"
+        const val KEY_WIFI_ALWAYS_ON = "wifi_always_on"
         const val KEY_KIOSK_PACKAGES = "kiosk_packages"
 
         val FLAG_KEYS = listOf(
@@ -59,6 +62,7 @@ data class Policy(
             KEY_STATUS_BAR_DISABLED, KEY_INSTALL_APPS_BLOCKED, KEY_UNINSTALL_APPS_BLOCKED,
             KEY_USB_FILE_TRANSFER_BLOCKED, KEY_ADJUST_VOLUME_BLOCKED, KEY_SAFE_BOOT_BLOCKED,
             KEY_FACTORY_RESET_BLOCKED, KEY_AUTO_OS_UPDATES, KEY_STAY_AWAKE_ON_POWER,
+            KEY_WIFI_ALWAYS_ON,
         )
 
         /** Keys that could sever Wi-Fi or adb, the only recovery paths. Refused on sight. */
@@ -110,6 +114,7 @@ data class Policy(
                 factoryResetBlocked = flag(KEY_FACTORY_RESET_BLOCKED),
                 autoOsUpdates = flag(KEY_AUTO_OS_UPDATES),
                 stayAwakeOnPower = flag(KEY_STAY_AWAKE_ON_POWER),
+                wifiAlwaysOn = flag(KEY_WIFI_ALWAYS_ON),
                 kioskPackages = packages.sorted(),
             )
             if (policy.kioskMode && policy.kioskPackages.isEmpty()) {

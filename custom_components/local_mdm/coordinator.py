@@ -131,6 +131,26 @@ class LocalMdmCoordinator(DataUpdateCoordinator[DeviceStatus]):
         except LocalMdmConnectionError as err:
             raise HomeAssistantError(f"Could not lock the screen: {err}") from err
 
+    async def async_reboot(self) -> None:
+        """Reboot the tablet now."""
+        try:
+            await self.client.async_reboot()
+        except LocalMdmAuthError as err:
+            raise ConfigEntryAuthFailed(str(err)) from err
+        except (LocalMdmPolicyRefusedError, LocalMdmConnectionError) as err:
+            raise HomeAssistantError(f"Could not reboot: {err}") from err
+
+    async def async_configure_wifi(self, ssid: str, password: str | None, hidden: bool) -> None:
+        """Provision a Wi-Fi network on the tablet."""
+        try:
+            await self.client.async_configure_wifi(ssid, password, hidden)
+        except LocalMdmAuthError as err:
+            raise ConfigEntryAuthFailed(str(err)) from err
+        except LocalMdmPolicyRefusedError as err:
+            raise HomeAssistantError(f"DPC refused the Wi-Fi network: {err}") from err
+        except LocalMdmConnectionError as err:
+            raise HomeAssistantError(f"Could not configure Wi-Fi: {err}") from err
+
     async def async_install_package(self, url: str, sha256: str | None) -> None:
         """Start a silent APK install; the result arrives as a report."""
         try:

@@ -133,6 +133,10 @@ async def test_lock_screen_button(hass, setup_entry, fake_client: FakeClient):
         "button", "press", {"entity_id": "button.tablet_tablet_kitchen_lock_screen"}, blocking=True
     )
     assert fake_client.lock_calls == 1
+    await hass.services.async_call(
+        "button", "press", {"entity_id": "button.tablet_tablet_kitchen_reboot"}, blocking=True
+    )
+    assert fake_client.reboot_calls == 1
 
 
 async def test_diagnostics_redact_secrets(hass, setup_entry, hass_client):
@@ -182,13 +186,14 @@ async def test_os_and_app_version_entities(
 
 
 async def test_new_policy_flags_have_switches(hass, setup_entry, fake_client: FakeClient):
-    for key in ("automatic_os_updates", "stay_awake_on_power"):
+    for key in ("automatic_os_updates", "stay_awake_on_power", "wi_fi_always_on"):
         entity_id = f"switch.tablet_tablet_kitchen_{key}"
         assert hass.states.get(entity_id).state == STATE_OFF
         await hass.services.async_call("switch", "turn_on", {"entity_id": entity_id}, blocking=True)
         assert hass.states.get(entity_id).state == STATE_ON
     assert fake_client.policy_calls[-1][0]["auto_os_updates"] is True
     assert fake_client.policy_calls[-1][0]["stay_awake_on_power"] is True
+    assert fake_client.policy_calls[-1][0]["wifi_always_on"] is True
 
 
 async def test_install_package_action(hass, setup_entry, fake_client: FakeClient):
@@ -229,3 +234,29 @@ async def test_install_package_action(hass, setup_entry, fake_client: FakeClient
             {"device_id": device.id, "url": "ftp://example.invalid/a.apk"},
             blocking=True,
         )
+
+
+async def test_configure_wifi_action_and_ssid_sensor(hass, setup_entry, fake_client: FakeClient):
+    from homeassistant.helpers import device_registry as dr
+
+    assert hass.states.get("sensor.tablet_tablet_kitchen_wi_fi_network").state == "IoT-Tablets"
+    device = dr.async_get(hass).async_get_device_by_identifier(
+        ("local_mdm", "tablet-kitchen"), setup_entry.entry_id
+    )
+    await hass.services.async_call(
+        "local_mdm",
+        "configure_wifi",
+        {"device_id": device.id, "ssid": "IoT-Tablets", "password": "correct horse battery"},
+        blocking=True,
+    )
+    assert fake_client.wifi_calls == [("IoT-Tablets", "correct horse battery", False)]
+    with pytest.raises(vol.Invalid):
+        await hass.services.async_call(
+            "local_mdm",
+            "configure_wifi",
+            {"device_id": device.id, "ssid": "x", "password": "short"},
+            blocking=True,
+        )
+    # The password never lands in Home Assistant state.
+    for state in hass.states.async_all():
+        assert "correct horse battery" not in str(state.attributes)

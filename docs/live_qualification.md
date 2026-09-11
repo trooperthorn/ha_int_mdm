@@ -91,6 +91,44 @@ this pass covers what the DPC does before provisioning.
 | Policy and install refused when not Device Owner | both 422 "not device owner" | pass |
 | Knox state before provisioning | warranty bit 0, verified boot green (the DPC needs neither root nor an unlocked bootloader) | pass |
 
-Not yet observed: this tablet as Device Owner (needs a factory reset with no
-accounts added), a real pending OS update, Android 14, and a Companion update
-over an existing install.
+## 2026-09-11: Samsung Galaxy Tab A11+ (SM-X230), Android 16, as Device Owner
+
+Provisioned after a Settings-driven factory reset with every account step
+skipped and Wi-Fi off during setup (`dpm set-device-owner` succeeded on the
+first try; Knox warranty bit stayed 0). Paired with the test Home Assistant
+over USB (adb forward and reverse), later driven over the LAN.
+
+| Check | How | Result |
+| --- | --- | --- |
+| Device Owner set on Samsung One UI | `dpm set-device-owner`, status `is_device_owner` true | pass |
+| Every non-kiosk flag, both new flags | direct PUT: 12 keys applied, zero failures; `SystemUpdatePolicy (type: 1)`, stay-on 7, `no_install_apps` and the rest in `dumpsys user` | pass |
+| Wi-Fi never restricted, adb alive | no `no_config_wifi` restriction; adb answered throughout the policy pass | pass |
+| Lock screen action | panel dozed | pass |
+| Config flow and 42 entities in live HA | pair over USB forward | pass |
+| Acceptance round trip on hardware | camera switch, DPC apply, report, enforced sensor | pass, 114 ms |
+| Kiosk with Settings as the target | `KioskHome` is HOME, `lock_task_active` true | pass |
+| Reboot into kiosk | `adb reboot` and later the DPC's own reboot action; back in lock task on its own, Wi-Fi reconnected | pass, about 45 s |
+| DPC self-update through `install_package` | APK served from the workstation, digest checked, service kept running | pass, 4 s |
+| `configure_wifi` endpoint | throwaway network accepted (200); empty SSID refused | pass, with the finding below |
+| SSID reporting | null until the DPC enabled location for itself; then the SSID | pass |
+| Reboot action | `POST /v1/actions/reboot` | pass |
+
+Found and fixed during this pass:
+
+- Lock task hid the "Allow USB debugging?" dialog, because it belongs to
+  `com.android.shell`, which was not in the allow list. With the adb key not
+  yet persisted and Wi-Fi off, the tablet was unreachable until the owner
+  joined Wi-Fi from the Settings kiosk. The shell package is now always in
+  the lock task allow list. Persist the adb key ("Always allow from this
+  computer") before the first kiosk.
+- `enableNetwork(id, disableOthers = true)` dropped the current connection to
+  try the new network and took the tablet off the LAN for a few seconds.
+  Provisioning now adds the network without forcing a switch.
+- The connected SSID needs the device location toggle, not only the
+  permission; the DPC enables both for itself at service start.
+
+Not yet observed: the adb dialog appearing inside kiosk with the shell fix
+(the key had not been persisted when it was needed), a real pending OS
+update, Android 14, a Companion update over an existing install, and
+`configure_wifi` with the real network credentials (only the owner holds
+them; run it from the Home Assistant UI).

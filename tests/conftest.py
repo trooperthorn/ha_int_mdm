@@ -52,7 +52,7 @@ def status_payload(**overrides: Any) -> dict[str, Any]:
         "enforcement": dict.fromkeys(POLICY_FLAGS, ENFORCEMENT_APPLIED),
         "lock_task_active": False,
         "battery": {"level": 87, "charging": True},
-        "network": {"wifi_connected": True},
+        "network": {"wifi_connected": True, "wifi_enabled": True, "ssid": "IoT-Tablets"},
         "reported_at": "2026-09-10T12:00:00+00:00",
         "os": {
             "release": "15",
@@ -75,7 +75,9 @@ class FakeClient:
         self.webhook_url: str | None = None
         self.policy_calls: list[tuple[dict[str, Any], int]] = []
         self.lock_calls = 0
+        self.reboot_calls = 0
         self.install_calls: list[tuple[str, str | None]] = []
+        self.wifi_calls: list[tuple[str, str | None, bool]] = []
         self.fail_with: Exception | None = None
         self.webhook_fail_with: Exception | None = None
 
@@ -106,9 +108,17 @@ class FakeClient:
         self._raise_if_failing()
         self.lock_calls += 1
 
+    async def async_reboot(self) -> None:
+        self._raise_if_failing()
+        self.reboot_calls += 1
+
     async def async_install_package(self, url: str, sha256: str | None = None) -> None:
         self._raise_if_failing()
         self.install_calls.append((url, sha256))
+
+    async def async_configure_wifi(self, ssid: str, password: str | None, hidden: bool) -> None:
+        self._raise_if_failing()
+        self.wifi_calls.append((ssid, password, hidden))
 
 
 @pytest.fixture

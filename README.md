@@ -18,17 +18,19 @@ protocol, security, and operations detail live in [docs/README.md](docs/README.m
 
 One device per tablet with:
 
-- Twelve policy switches (kiosk mode, camera, screen capture, status bar, app
+- Thirteen policy switches (kiosk mode, camera, screen capture, status bar, app
   install and uninstall, USB file transfer, volume, safe boot, factory reset,
-  automatic OS updates, stay awake on power). The switch is the desired state.
+  automatic OS updates, stay awake on power, Wi-Fi always on). The switch is the desired state.
 - One "enforced" binary sensor per policy, on only when the tablet reports the
   policy applied. This is the round-trip proof the switch alone cannot give.
 - Status sensors: Device Owner, kiosk lock, enforcement problem, Wi-Fi,
-  battery, charging, OS update pending, Android version, security patch,
-  kiosk app version, policy version, DPC version, last report.
-- Buttons: lock screen now, refresh. A text entity holds the kiosk package list.
-- Action `local_mdm.install_package`: silent APK install from a URL, for
-  keeping the Companion app current from GitHub releases.
+  Wi-Fi network, battery, charging, OS update pending, Android version,
+  security patch, kiosk app version, policy version, DPC version, last report.
+- Buttons: lock screen now, reboot, refresh. A text entity holds the kiosk package list.
+- Actions: `local_mdm.install_package` (silent APK install from a URL, for
+  keeping the Companion app current from GitHub releases) and
+  `local_mdm.configure_wifi` (hand a network to the tablet; the password is
+  stored only by Android).
 
 The tablet pushes every change to a Home Assistant webhook immediately; polling
 (default 60 s) only catches a missed push.
@@ -135,8 +137,7 @@ that is Device Owner without a Google account.
 
 - Plain HTTP with a bearer token on the LAN. Segment the tablet VLAN; see
   docs/security.md.
-- The Android app is qualified on an Android 15 emulator (Device Owner,
-  full round trip, reboot persistence) and as a plain app on an Android 16
-  phone. A Samsung tablet and Android 14 are not yet observed; see
-  docs/live_qualification.md.
+- The Android app is qualified as Device Owner on an Android 15 emulator and
+  on a Samsung Galaxy Tab A11+ (Android 16, One UI). Android 14 is not yet
+  observed; see docs/live_qualification.md.
 - One entry per tablet; no discovery yet.

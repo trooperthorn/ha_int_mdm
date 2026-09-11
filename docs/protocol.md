@@ -14,6 +14,8 @@ real tablet.
 | `PUT /v1/policy` | `{"version": n, "policy": {...}}` | status document after apply | same |
 | `PUT /v1/webhook` | `{"url": "http://ha:8123/api/webhook/<id>"}` | `{"ok": true}` | same |
 | `POST /v1/actions/lock_screen` | none | `{"ok": true}` | same |
+| `POST /v1/actions/reboot` | none | `{"ok": true}`; the connection drops as the tablet reboots | verified on the Samsung |
+| `POST /v1/actions/configure_wifi` | `{"ssid": "...", "password": "..." (optional, 8 to 63), "hidden": false}` | `{"ok": true, "network_id": n}`; the network goes into Android's own store, the DPC keeps nothing | verified on the Samsung |
 | `POST /v1/actions/install_package` | `{"url": "https://...apk", "sha256": "<64 hex, optional>"}` | 202 `{"ok": true}` once the download starts; progress and outcome arrive in `last_install` (`downloading`, `installing`, `installed`, `failed`) | verified on the emulator with the Companion release |
 
 Error codes: 401 bad token, 400 malformed JSON, unknown key, or a bad URL or
@@ -39,7 +41,7 @@ non-JSON, 422 when the report's `device_id` is not the entry's tablet.
   "enforcement": { "kiosk_mode": "applied", "camera_disabled": "applied", "...": "applied" },
   "lock_task_active": false,
   "battery": { "level": 87, "charging": true },
-  "network": { "wifi_connected": true },
+  "network": { "wifi_connected": true, "wifi_enabled": true, "ssid": "IoT-Tablets" },
   "os": { "release": "15", "sdk": 35, "security_patch": "2024-09-05", "build": "...", "model": "...", "manufacturer": "..." },
   "system_update": { "policy": 1, "pending": false },
   "installed": { "io.homeassistant.companion.android": "2026.6.5" },
@@ -75,6 +77,7 @@ platform), `refused` (SecurityException, or not Device Owner).
 | `safe_boot_blocked` | `addUserRestriction(DISALLOW_SAFE_BOOT)` | |
 | `factory_reset_blocked` | `addUserRestriction(DISALLOW_FACTORY_RESET)` | Blocks the Settings path only; recovery-mode wipe still works, which is intended |
 | `auto_os_updates` | `setSystemUpdatePolicy(createAutomaticInstallPolicy())`, or `null` when off | Android installs a system update as soon as the OEM offers it, no user prompt; when off the tablet follows its normal update prompts |
+| `wifi_always_on` | `WifiManager.setWifiEnabled(true)` when the radio is off (still permitted for a Device Owner) | Keeps the management path up; the user can still change networks |
 | `stay_awake_on_power` | `setGlobalSetting(STAY_ON_WHILE_PLUGGED_IN, "7")`, or `"0"` when off | Screen never times out while on AC, USB, or wireless power |
 | `kiosk_packages` | list of package names allowed in lock task | The DPC package is always added by the DPC and always removed from the user's list by the guard |
 
