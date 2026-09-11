@@ -28,3 +28,4 @@
 - Android TV (Sony Bravia, Google TV) tier: feasible via adb Device Owner at the cost of the Google account; needs LEANBACK_LAUNCHER alias, touchscreen/leanback feature flags, D-pad focus. Not started; see docs/android-tv-assessment.md.
 
 - Pixel Tablet profile-based management: app_mode/allowed_packages/accounts_locked keys, allowlist and multi-app lock task modes, HA security_profile select and apply_profile action; options and order of work in docs/pixel-tablet-profiles.md. Not started.
+- Lite tier self-update leaves `last_install` at `awaiting_user`: when the DPC updates itself through `install_package`, the platform kills the process before InstallReceiver's STATUS_SUCCESS arrives, so the stored state never reaches `installed` (Fire, 2026-09-11; other packages are unaffected). On service start, if `last_install` is `awaiting_user` and the DPC's own version changed, record `installed`.
