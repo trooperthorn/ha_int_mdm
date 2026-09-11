@@ -108,7 +108,7 @@ DPC runs as an active device admin provisioned by
 
 | Key | Lite tier | Reported as |
 | --- | --- | --- |
-| `kiosk_mode` | HomeWatch polls usage events once a second (adb-granted usage access) and returns the stock launcher to the kiosk app; `startLockTask` gives screen pinning, which the user can exit with the back+recents gesture. Fire OS does not deliver launcher window events to third-party accessibility services, which is why polling is used | `limited`, or `failed` without usage access |
+| `kiosk_mode` | HomeWatch polls usage events once a second (adb-granted usage access) and returns the stock launcher to the kiosk app; no lock task and no screen pinning: pinning would hold the DPC's own splash, not the kiosk app, and trapped a Fire on the splash (2026-09-11), so the DPC only calls `startLockTask` where it is lock-task permitted. Fire OS does not deliver launcher window events to third-party accessibility services, which is why polling is used | `limited`, or `failed` without usage access |
 | `camera_disabled` | `setCameraDisabled` (device admin policy) | `applied` |
 | `stay_awake_on_power` | `Settings.Global` write with the adb-granted `WRITE_SECURE_SETTINGS` | `applied`, or `unsupported` without the grant |
 | `wifi_always_on` | `setWifiEnabled(true)` on Android 9 | `applied` (Android 10+: `unsupported`) |
