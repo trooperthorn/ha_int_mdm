@@ -85,6 +85,48 @@ upgrades; the price is a visible but inert navigation bar.
 - `allowSettingsChanges(false)` (Knox, API level 2) would hide Settings
   entirely, including Wi-Fi; forbidden.
 
+## Boot logo and boot animation (assessed 2026-09-11)
+
+Question: can the tablet show a lock instead of the stock imagery at power-on
+so a viewer sees it is MDM-managed?
+
+There are three separate screens at boot, and only one is reachable at all:
+
+1. **Bootloader splash** ("Galaxy Tab" / "powered by Android"): drawn by the
+   bootloader from the `up_param` partition. No Android or Knox API touches
+   it; changing it needs an unlocked bootloader, which trips Knox. Out.
+2. **Boot animation**: on this tablet it is `bootsamsung.qmg`,
+   `bootsamsungloop.qmg` and `shutdown.qmg` under `/system/media` (verified
+   on the SM-X230, One UI, Android 16). AOSP's user override
+   `/data/local/bootanimation.zip` is not usable: `/data/local` is
+   `root:root 0751`, only `/data/local/tmp` is shell-writable, and Samsung's
+   animation player takes QMG, not the AOSP zip. No Device Owner API exists
+   for it. The Knox route is `SystemManager.setBootingAnimation(animationFD,
+   loopFD, soundFD, delay)`, `setShuttingDownAnimation` and `clearAnimation`
+   (permission `KNOX_CUSTOM_SYSTEM`), which the vendor marks "deprecated in
+   API level 38 with Knox SDK v3.11 and is no longer recommended for use"
+   with no successor. It also needs the KPE Premium license (online
+   activation) and QMG files that Samsung alone produces: "To request QMG
+   animations, go to the Knox Partner Portal support page" after supplying
+   PNG frames (max 99 boot frames, 30 shutdown frames, 12 fps, 2 MB per PNG,
+   50 MB zip, device resolution). Knox Manage and Knox Configure expose the
+   same feature under the same license. Feasible in principle, but it adds a
+   cloud license, a deprecated API, and a Samsung support ticket per artwork.
+3. **First app on screen**: once Android is up, the DPC's HOME alias is the
+   first activity, and it launches the Companion app, whose own splash shows
+   the Home Assistant logo. That splash is drawn by the Companion app and is
+   not configurable from outside it.
+
+Decision: do not chase 1 or 2. The practical way to show "MDM managed" at
+boot is a lock splash drawn by the DPC itself in `KioskActivity` for the
+second or two before Companion is launched (and whenever kiosk re-asserts),
+which is pure Device Owner code, offline, and independent of Samsung. Logged
+in the backlog as "Kiosk lock splash".
+
+Sources: Knox SDK `SystemManager` reference, "Custom boot and shutdown
+animations" (Knox SDK features), Knox Manage KBA-360051042874, Knox
+Configure "Create a custom animation file"; tablet inspection via adb.
+
 ## Recommendation
 
 Do not add the Knox SDK to Local MDM in this phase. Revisit only for
