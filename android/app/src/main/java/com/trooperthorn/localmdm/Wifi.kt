@@ -69,11 +69,23 @@ class Wifi(private val context: Context) {
         return result.networkId
     }
 
+    @Volatile private var lastSsid: String? = null
+
+    /**
+     * One UI answers the deprecated connectionInfo call with the SSID only
+     * some of the time even with location granted and on, so the last good
+     * value is kept while Wi-Fi stays connected and dropped when it is not.
+     */
     fun connectedSsid(): String? {
+        if (!Network.isWifiConnected(context)) {
+            lastSsid = null
+            return null
+        }
         @Suppress("DEPRECATION")
-        val raw = runCatching { wifi.connectionInfo.ssid }.getOrNull() ?: return null
-        if (raw == WifiManager.UNKNOWN_SSID || raw.isEmpty()) return null
-        return raw.removeSurrounding("\"")
+        val raw = runCatching { wifi.connectionInfo.ssid }.getOrNull()
+        val fresh = raw?.takeUnless { it == WifiManager.UNKNOWN_SSID || it.isEmpty() }?.removeSurrounding("\"")
+        if (fresh != null) lastSsid = fresh
+        return lastSsid
     }
 
     companion object {

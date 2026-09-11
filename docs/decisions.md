@@ -123,3 +123,11 @@ Rejected: relying on adb to reboot a tablet during qualification. Chosen:
 `DevicePolicyManager.reboot`, exposed as a Home Assistant button, because
 the whole point of the design is that adb is a recovery path, not a control
 path.
+
+## 2026-09-11: the connected SSID is cached while Wi-Fi stays connected
+
+One UI returned the SSID from `connectionInfo` on roughly one call in three
+even with the location permission granted and location on. The DPC keeps the
+last good value while the transport is still Wi-Fi and clears it when the
+connection drops, so Home Assistant's Wi-Fi network sensor no longer flickers
+to unknown between heartbeats.
