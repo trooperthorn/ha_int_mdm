@@ -30,6 +30,10 @@ class PolicyEngine(private val context: Context, private val store: PolicyStore)
     val isDeviceOwner: Boolean get() = dpm.isDeviceOwnerApp(context.packageName)
 
     fun apply(policy: Policy, version: Int): Map<String, String> {
+        // Persist first: a reboot or crash in the middle of enforcement must
+        // not leave the previous policy on disk for BootReceiver to restore.
+        store.policy = policy
+        store.policyVersion = version
         if (!isDeviceOwner) {
             val refused = Policy.FLAG_KEYS.associateWith { "refused" }
             store.enforcement = refused
@@ -75,8 +79,6 @@ class PolicyEngine(private val context: Context, private val store: PolicyStore)
         }
         result[Policy.KEY_KIOSK_MODE] = attempt { applyKiosk(policy) }
 
-        store.policy = policy
-        store.policyVersion = version
         store.enforcement = result
         return result
     }

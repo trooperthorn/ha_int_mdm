@@ -136,3 +136,7 @@ them; run it from the Home Assistant UI).
 ## Lock splash (2026-09-11, SM-X230)
 
 Debug build installed over adb; kiosk switch cycled off/on from Home Assistant. The DPC's `KioskActivity` drew the chained shield, "MDM MANAGED" and the indeterminate bar full-screen, then Companion resumed as the top activity after the 2 s hold. Screenshot taken 1.2 s after the switch call.
+
+## Reboot response and policy drift (2026-09-11, SM-X230)
+
+With the reboot route answering before `dpm.reboot`, the Home Assistant reboot button returned 200 and the tablet restarted into kiosk (HOME = KioskHome, Companion on top). The coordinator now re-pushes the desired policy when a status report or poll disagrees with it, at most once per 30 s; covered by `test_drifted_report_is_repushed`.

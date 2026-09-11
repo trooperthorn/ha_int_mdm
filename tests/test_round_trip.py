@@ -260,3 +260,20 @@ async def test_configure_wifi_action_and_ssid_sensor(hass, setup_entry, fake_cli
     # The password never lands in Home Assistant state.
     for state in hass.states.async_all():
         assert "correct horse battery" not in str(state.attributes)
+
+
+async def test_drifted_report_is_repushed(
+    hass, setup_entry, fake_client: FakeClient, hass_client_no_auth
+):
+    await hass.services.async_call("switch", "turn_on", {"entity_id": CAMERA_SWITCH}, blocking=True)
+    pushes = len(fake_client.policy_calls)
+    # The tablet comes back from a reboot with the previous policy on disk.
+    stale = status_payload(policy={**fake_client.payload["policy"], "camera_disabled": False})
+    await _post_webhook(hass, hass_client_no_auth, stale)
+    await hass.async_block_till_done()
+    assert len(fake_client.policy_calls) == pushes + 1
+    assert fake_client.policy_calls[-1][0]["camera_disabled"] is True
+    # A second identical report inside the interval does not push again.
+    await _post_webhook(hass, hass_client_no_auth, stale)
+    await hass.async_block_till_done()
+    assert len(fake_client.policy_calls) == pushes + 1

@@ -1,5 +1,7 @@
 package com.trooperthorn.localmdm
 
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import fi.iki.elonen.NanoHTTPD
 import org.json.JSONException
@@ -29,8 +31,7 @@ class HttpServer(
                 path == "/v1/actions/lock_screen" && session.method == Method.POST -> lock()
                 path == "/v1/actions/install_package" && session.method == Method.POST -> install(session)
                 path == "/v1/actions/configure_wifi" && session.method == Method.POST -> configureWifi(session)
-                path == "/v1/actions/reboot" && session.method == Method.POST ->
-                    if (engine.reboot()) json(JSONObject().put("ok", true)) else text(UNPROCESSABLE_ENTITY, "reboot refused")
+                path == "/v1/actions/reboot" && session.method == Method.POST -> reboot()
                 else -> text(Response.Status.NOT_FOUND, "not found")
             }
         } catch (err: JSONException) {
@@ -71,6 +72,18 @@ class HttpServer(
         store.webhookUrl = url
         onReport()
         return json(JSONObject().put("ok", true))
+    }
+
+    /**
+     * The response must leave before dpm.reboot() tears the socket down, or
+     * Home Assistant reports a failure for a reboot that happened (seen on
+     * 2026-09-11). The reboot itself runs from the main looper after a short
+     * delay so this handler can finish writing.
+     */
+    private fun reboot(): Response {
+        if (!engine.isDeviceOwner) return text(UNPROCESSABLE_ENTITY, "not device owner")
+        Handler(Looper.getMainLooper()).postDelayed({ engine.reboot() }, REBOOT_DELAY_MS)
+        return json(JSONObject().put("ok", true).put("delay_ms", REBOOT_DELAY_MS))
     }
 
     private fun lock(): Response =
@@ -149,6 +162,7 @@ class HttpServer(
     }
 
     companion object {
+        const val REBOOT_DELAY_MS = 500L
         private const val TAG = "LocalMdm.Http"
         private const val MAX_BODY = 64 * 1024
     }
