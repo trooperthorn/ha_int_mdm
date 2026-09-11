@@ -27,6 +27,8 @@ One device per tablet with:
   battery, charging, OS update pending, Android version, security patch,
   kiosk app version, policy version, DPC version, last report.
 - Buttons: lock screen now, refresh. A text entity holds the kiosk package list.
+- Action `local_mdm.install_package`: silent APK install from a URL, for
+  keeping the Companion app current from GitHub releases.
 
 The tablet pushes every change to a Home Assistant webhook immediately; polling
 (default 60 s) only catches a missed push.

@@ -43,54 +43,154 @@
   },
   "entity": {
     "switch": {
-      "kiosk_mode": { "name": "Kiosk mode" },
-      "camera_disabled": { "name": "Camera disabled" },
-      "screen_capture_disabled": { "name": "Screen capture disabled" },
-      "status_bar_disabled": { "name": "Status bar disabled" },
-      "install_apps_blocked": { "name": "App installs blocked" },
-      "uninstall_apps_blocked": { "name": "App uninstalls blocked" },
-      "usb_file_transfer_blocked": { "name": "USB file transfer blocked" },
-      "adjust_volume_blocked": { "name": "Volume changes blocked" },
-      "safe_boot_blocked": { "name": "Safe boot blocked" },
-      "factory_reset_blocked": { "name": "Factory reset blocked" },
-      "auto_os_updates": { "name": "Automatic OS updates" },
-      "stay_awake_on_power": { "name": "Stay awake on power" }
+      "kiosk_mode": {
+        "name": "Kiosk mode"
+      },
+      "camera_disabled": {
+        "name": "Camera disabled"
+      },
+      "screen_capture_disabled": {
+        "name": "Screen capture disabled"
+      },
+      "status_bar_disabled": {
+        "name": "Status bar disabled"
+      },
+      "install_apps_blocked": {
+        "name": "App installs blocked"
+      },
+      "uninstall_apps_blocked": {
+        "name": "App uninstalls blocked"
+      },
+      "usb_file_transfer_blocked": {
+        "name": "USB file transfer blocked"
+      },
+      "adjust_volume_blocked": {
+        "name": "Volume changes blocked"
+      },
+      "safe_boot_blocked": {
+        "name": "Safe boot blocked"
+      },
+      "factory_reset_blocked": {
+        "name": "Factory reset blocked"
+      },
+      "auto_os_updates": {
+        "name": "Automatic OS updates"
+      },
+      "stay_awake_on_power": {
+        "name": "Stay awake on power"
+      }
     },
     "binary_sensor": {
-      "device_owner": { "name": "Device owner" },
-      "kiosk_active": { "name": "Kiosk lock" },
-      "enforcement_problem": { "name": "Enforcement problem" },
-      "wifi_connected": { "name": "Wi-Fi" },
-      "battery_charging": { "name": "Charging" },
-      "kiosk_mode_enforced": { "name": "Kiosk mode enforced" },
-      "camera_disabled_enforced": { "name": "Camera disabled enforced" },
-      "screen_capture_disabled_enforced": { "name": "Screen capture disabled enforced" },
-      "status_bar_disabled_enforced": { "name": "Status bar disabled enforced" },
-      "install_apps_blocked_enforced": { "name": "App installs blocked enforced" },
-      "uninstall_apps_blocked_enforced": { "name": "App uninstalls blocked enforced" },
-      "usb_file_transfer_blocked_enforced": { "name": "USB file transfer blocked enforced" },
-      "adjust_volume_blocked_enforced": { "name": "Volume changes blocked enforced" },
-      "safe_boot_blocked_enforced": { "name": "Safe boot blocked enforced" },
-      "factory_reset_blocked_enforced": { "name": "Factory reset blocked enforced" },
-      "auto_os_updates_enforced": { "name": "Automatic OS updates enforced" },
-      "stay_awake_on_power_enforced": { "name": "Stay awake on power enforced" },
-      "os_update_pending": { "name": "OS update pending" }
+      "device_owner": {
+        "name": "Device owner"
+      },
+      "kiosk_active": {
+        "name": "Kiosk lock"
+      },
+      "enforcement_problem": {
+        "name": "Enforcement problem"
+      },
+      "wifi_connected": {
+        "name": "Wi-Fi"
+      },
+      "battery_charging": {
+        "name": "Charging"
+      },
+      "kiosk_mode_enforced": {
+        "name": "Kiosk mode enforced"
+      },
+      "camera_disabled_enforced": {
+        "name": "Camera disabled enforced"
+      },
+      "screen_capture_disabled_enforced": {
+        "name": "Screen capture disabled enforced"
+      },
+      "status_bar_disabled_enforced": {
+        "name": "Status bar disabled enforced"
+      },
+      "install_apps_blocked_enforced": {
+        "name": "App installs blocked enforced"
+      },
+      "uninstall_apps_blocked_enforced": {
+        "name": "App uninstalls blocked enforced"
+      },
+      "usb_file_transfer_blocked_enforced": {
+        "name": "USB file transfer blocked enforced"
+      },
+      "adjust_volume_blocked_enforced": {
+        "name": "Volume changes blocked enforced"
+      },
+      "safe_boot_blocked_enforced": {
+        "name": "Safe boot blocked enforced"
+      },
+      "factory_reset_blocked_enforced": {
+        "name": "Factory reset blocked enforced"
+      },
+      "auto_os_updates_enforced": {
+        "name": "Automatic OS updates enforced"
+      },
+      "stay_awake_on_power_enforced": {
+        "name": "Stay awake on power enforced"
+      },
+      "os_update_pending": {
+        "name": "OS update pending"
+      }
     },
     "sensor": {
-      "policy_version": { "name": "Policy version" },
-      "dpc_version": { "name": "DPC version" },
-      "enforcement_failures": { "name": "Enforcement failures" },
-      "last_report": { "name": "Last report" },
-      "os_version": { "name": "Android version" },
-      "security_patch": { "name": "Security patch" },
-      "kiosk_app_version": { "name": "Kiosk app version" },
-      "last_install": { "name": "Last install" }
+      "policy_version": {
+        "name": "Policy version"
+      },
+      "dpc_version": {
+        "name": "DPC version"
+      },
+      "enforcement_failures": {
+        "name": "Enforcement failures"
+      },
+      "last_report": {
+        "name": "Last report"
+      },
+      "os_version": {
+        "name": "Android version"
+      },
+      "security_patch": {
+        "name": "Security patch"
+      },
+      "kiosk_app_version": {
+        "name": "Kiosk app version"
+      },
+      "last_install": {
+        "name": "Last install"
+      }
     },
     "button": {
-      "lock_screen": { "name": "Lock screen" }
+      "lock_screen": {
+        "name": "Lock screen"
+      }
     },
     "text": {
-      "kiosk_packages": { "name": "Kiosk packages" }
+      "kiosk_packages": {
+        "name": "Kiosk packages"
+      }
+    }
+  },
+  "services": {
+    "install_package": {
+      "name": "Install package",
+      "description": "Download an APK and install it silently on the tablet. Android only accepts an update signed with the same key as the installed app.",
+      "fields": {
+        "device_id": {
+          "name": "Tablet",
+          "description": "The Local MDM tablet to install on."
+        },
+        "url": {
+          "name": "APK URL",
+          "description": "HTTP or HTTPS address of the APK, for example a GitHub release asset."
+        },
+        "sha256": {
+          "name": "SHA-256",
+          "description": "Optional digest of the APK; the install is refused when it does not match."
+        }
+      }
     }
   }
 }

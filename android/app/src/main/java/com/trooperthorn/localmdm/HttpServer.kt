@@ -27,6 +27,7 @@ class HttpServer(
                 path == "/v1/policy" && session.method == Method.PUT -> putPolicy(session)
                 path == "/v1/webhook" && session.method == Method.PUT -> putWebhook(session)
                 path == "/v1/actions/lock_screen" && session.method == Method.POST -> lock()
+                path == "/v1/actions/install_package" && session.method == Method.POST -> install(session)
                 else -> text(Response.Status.NOT_FOUND, "not found")
             }
         } catch (err: JSONException) {
@@ -72,6 +73,28 @@ class HttpServer(
     private fun lock(): Response =
         if (engine.lockNow()) json(JSONObject().put("ok", true))
         else text(UNPROCESSABLE_ENTITY, "lockNow refused")
+
+    private fun install(session: IHTTPSession): Response {
+        val body = readJson(session)
+        val url = body.optString("url", "")
+        val sha256 = body.optString("sha256", "").lowercase().removePrefix("sha256:")
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+            return text(Response.Status.BAD_REQUEST, "url must be http or https")
+        }
+        if (sha256.isNotEmpty() && !sha256.matches(Regex("[0-9a-f]{64}"))) {
+            return text(Response.Status.BAD_REQUEST, "sha256 must be 64 hex characters")
+        }
+        if (!engine.isDeviceOwner) return text(UNPROCESSABLE_ENTITY, "not device owner")
+        if (!installer.start(url, sha256.ifEmpty { null })) {
+            return text(UNPROCESSABLE_ENTITY, "an install is already running")
+        }
+        return newFixedLengthResponse(ACCEPTED, "application/json", JSONObject().put("ok", true).toString())
+    }
+
+    private object ACCEPTED : Response.IStatus {
+        override fun getRequestStatus(): Int = 202
+        override fun getDescription(): String = "202 Accepted"
+    }
 
     private fun readJson(session: IHTTPSession): JSONObject {
         val length = session.headers["content-length"]?.toIntOrNull() ?: 0

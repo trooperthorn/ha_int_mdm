@@ -93,4 +93,11 @@ with `cmd package resolve-activity` in both states.
 Android refuses to update an installed package with an APK signed by a
 different key, so a Device Owner install from a URL cannot replace Companion
 with a look-alike. The optional sha256 (GitHub publishes one per asset) adds
-transport integrity only. The route itself is not wired yet; see backlog.
+transport integrity only. Wired on 2026-09-11 at the owner's request and verified with the Companion
+release on the emulator.
+
+## 2026-09-11: package visibility through `<queries>`, not QUERY_ALL_PACKAGES
+
+Rejected: `QUERY_ALL_PACKAGES`. Chosen: a `<queries>` element for the
+MAIN/LAUNCHER intent, which is exactly the set the DPC needs (apps it can
+put in kiosk and report versions for).

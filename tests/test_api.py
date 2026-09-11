@@ -36,6 +36,7 @@ class FakeDpc:
         app.router.add_put("/v1/policy", self.put_policy)
         app.router.add_put("/v1/webhook", self.put_webhook)
         app.router.add_post("/v1/actions/lock_screen", self.lock)
+        app.router.add_post("/v1/actions/install_package", self.install)
         return app
 
     @web.middleware
@@ -62,6 +63,11 @@ class FakeDpc:
     async def put_webhook(self, request: web.Request) -> web.Response:
         self.received.append(("PUT", request.path, await request.json()))
         return web.json_response({"ok": True})
+
+    async def install(self, request: web.Request) -> web.Response:
+        body = await request.json()
+        self.received.append(("POST", request.path, body))
+        return web.json_response({"ok": True}, status=202)
 
     async def lock(self, request: web.Request) -> web.Response:
         self.received.append(("POST", request.path, None))
@@ -154,3 +160,17 @@ def test_malformed_payload():
         DeviceStatus.from_payload({"policy": {}})
     with pytest.raises(ValueError):
         DeviceStatus.from_payload(json.loads('{"device_id": "x", "policy_version": "abc"}'))
+
+
+async def test_install_package_normalizes_digest(dpc):
+    fake, http = dpc
+    await _client(http).async_install_package(
+        "https://example.invalid/app.apk", "SHA256:" + "A" * 64
+    )
+    assert fake.received[-1] == (
+        "POST",
+        "/v1/actions/install_package",
+        {"url": "https://example.invalid/app.apk", "sha256": "a" * 64},
+    )
+    await _client(http).async_install_package("https://example.invalid/app.apk")
+    assert fake.received[-1][2] == {"url": "https://example.invalid/app.apk"}
