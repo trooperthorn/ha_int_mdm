@@ -53,6 +53,16 @@ class PolicyStore(context: Context) {
         }
         set(value) = prefs.edit().putString(KEY_ENFORCEMENT, JSONObject(value).toString()).apply()
 
+    /** Packages the allowlist suspended last time, so a change or "open" lifts exactly those. */
+    var suspendedPackages: List<String>
+        get() = prefs.getStringSet(KEY_SUSPENDED, emptySet())?.sorted() ?: emptyList()
+        set(value) = prefs.edit().putStringSet(KEY_SUSPENDED, value.toSet()).apply()
+
+    /** Packages the platform refused to suspend on the last allowlist apply (reported as `limited`). */
+    var unsuspendable: List<String>
+        get() = prefs.getStringSet(KEY_UNSUSPENDABLE, emptySet())?.sorted() ?: emptyList()
+        set(value) = prefs.edit().putStringSet(KEY_UNSUSPENDABLE, value.toSet()).apply()
+
     /** Outcome of the last install_package action, reported until the next one. */
     var lastInstall: JSONObject?
         get() = prefs.getString(KEY_LAST_INSTALL, null)?.let { runCatching { JSONObject(it) }.getOrNull() }
@@ -60,6 +70,8 @@ class PolicyStore(context: Context) {
 
     companion object {
         private const val KEY_LAST_INSTALL = "last_install"
+        private const val KEY_SUSPENDED = "suspended_packages"
+        private const val KEY_UNSUSPENDABLE = "unsuspendable_packages"
         private const val KEY_DEVICE_ID = "device_id"
         private const val KEY_TOKEN = "token"
         private const val KEY_WEBHOOK = "webhook_url"

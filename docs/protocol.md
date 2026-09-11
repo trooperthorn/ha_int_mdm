@@ -40,6 +40,7 @@ non-JSON, 422 when the report's `device_id` is not the entry's tablet.
   "policy": { "kiosk_mode": false, "camera_disabled": true, "...": false, "kiosk_packages": [] },
   "enforcement": { "kiosk_mode": "applied", "camera_disabled": "applied", "...": "applied" },
   "lock_task_active": false,
+  "unsuspendable": [],
   "battery": { "level": 87, "charging": true },
   "network": { "wifi_connected": true, "wifi_enabled": true, "ssid": "IoT-Tablets" },
   "os": { "release": "15", "sdk": 35, "security_patch": "2024-09-05", "build": "...", "model": "...", "manufacturer": "..." },
@@ -88,6 +89,10 @@ derives it from `is_device_owner`.
 | `wifi_always_on` | `WifiManager.setWifiEnabled(true)` when the radio is off (still permitted for a Device Owner) | Keeps the management path up; the user can still change networks |
 | `stay_awake_on_power` | `setGlobalSetting(STAY_ON_WHILE_PLUGGED_IN, "7")`, or `"0"` when off | Screen never times out while on AC, USB, or wireless power |
 | `kiosk_packages` | list of package names allowed in lock task | The DPC package is always added by the DPC and always removed from the user's list by the guard |
+| `accounts_locked` | `DISALLOW_MODIFY_ACCOUNTS` | Add the Google account before turning this on; it blocks adding and removing accounts from Settings |
+| `add_user_blocked` | `DISALLOW_ADD_USER` | No second user or supervised profile can be created |
+| `app_mode` | `open`: lift every suspension this DPC placed. `allowlist`: `setPackagesSuspended` on every launchable package not in `allowed_packages` | Never suspended: the DPC, `com.android.shell`, Settings, the system UI, the Play Store (installer of record, Android refuses; use `install_apps_blocked`), any HOME launcher, the kiosk target. The stock launcher, notifications and Hub Mode keep working; a suspended app greys out. A package the platform still refuses is listed in `unsuspendable` and the key reports `limited` |
+| `allowed_packages` | list of package names that stay openable in `allowlist` mode | The DPC is removed by the guard; `kiosk_packages` are folded in on both sides so the kiosk target is never suspended. An empty list with `allowlist` is refused as unsafe |
 
 ## Keys refused on both sides
 
@@ -112,6 +117,7 @@ DPC runs as an active device admin provisioned by
 | `camera_disabled` | `setCameraDisabled` (device admin policy) | `applied` |
 | `stay_awake_on_power` | `Settings.Global` write with the adb-granted `WRITE_SECURE_SETTINGS` | `applied`, or `unsupported` without the grant |
 | `wifi_always_on` | `setWifiEnabled(true)` on Android 9 | `applied` (Android 10+: `unsupported`) |
+| `accounts_locked`, `add_user_blocked`, `app_mode` | no non-owner API | `unsupported` |
 | everything else | no non-owner API | `unsupported` |
 | `lock_screen` action | `lockNow` (device admin) | works |
 | `reboot` action | none | 422 |

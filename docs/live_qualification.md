@@ -176,3 +176,27 @@ SYSTEM_ALERT_WINDOW app ops). Over `adb forward`:
   switches in one call only applied the first; the second took on a single
   call. Not reproduced yet.
 
+
+## App allowlist and account locks on a Pixel Tablet (2026-09-11, tangorpro, Android 16, patch 2026-05-05)
+
+Provisioned as Device Owner over adb after the supervised child user and
+the Google account were removed by hand (`set-device-owner` names each
+blocker in turn: "already several users", then "already some accounts").
+Paired through the config flow; `management_tier` owner.
+
+- `PUT /v1/policy` with `app_mode: allowlist`, three allowed packages
+  (Companion, YouTube Kids, Calculator), `accounts_locked`,
+  `add_user_blocked`: YouTube Music and Firefox `suspended=true`, YouTube Kids
+  and Calculator not, Settings and the Pixel launcher untouched,
+  `no_modify_accounts` and `no_add_user` in the effective restrictions.
+- First attempt reported `app_mode: failed`: Android refused to suspend the
+  Play Store (`com.android.vending`, installer of record). Play is now on the
+  never-suspend list and any other refusal reports `limited` with the
+  packages in `unsuspendable`; the re-push reported `applied` with an empty
+  list.
+- `app_mode: open` lifted both suspensions.
+- The same build on the Samsung (SM-X230) kept lock task and Device Owner;
+  the old integration's pushes carry no new keys and the DPC defaults them.
+- Before the first policy push a fresh entry shows one enforcement failure
+  and eleven tier-limited keys from the empty enforcement map; both clear on
+  the first push (cosmetic, in the backlog).

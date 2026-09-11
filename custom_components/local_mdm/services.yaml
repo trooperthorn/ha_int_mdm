@@ -37,3 +37,15 @@ configure_wifi:
       default: false
       selector:
         boolean:
+apply_policy:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: local_mdm
+    policy:
+      required: true
+      example: '{"app_mode": "allowlist", "allowed_packages": ["io.homeassistant.companion.android"], "accounts_locked": true}'
+      selector:
+        object:

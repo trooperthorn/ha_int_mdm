@@ -43,6 +43,8 @@ def status_payload(**overrides: Any) -> dict[str, Any]:
     """A complete DPC status document with every flag off."""
     policy = dict.fromkeys(POLICY_FLAGS, False)
     policy["kiosk_packages"] = []
+    policy["app_mode"] = "open"
+    policy["allowed_packages"] = []
     payload: dict[str, Any] = {
         "device_id": DEVICE_ID,
         "dpc_version": "2026.09.10.1",

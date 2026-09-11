@@ -81,6 +81,12 @@
       },
       "wifi_always_on": {
         "name": "Wi-Fi always on"
+      },
+      "accounts_locked": {
+        "name": "Accounts locked"
+      },
+      "add_user_blocked": {
+        "name": "Adding users blocked"
       }
     },
     "binary_sensor": {
@@ -140,6 +146,12 @@
       },
       "wifi_always_on_enforced": {
         "name": "Wi-Fi always on enforced"
+      },
+      "accounts_locked_enforced": {
+        "name": "Accounts locked enforced"
+      },
+      "add_user_blocked_enforced": {
+        "name": "Adding users blocked enforced"
       }
     },
     "sensor": {
@@ -188,6 +200,18 @@
     "text": {
       "kiosk_packages": {
         "name": "Kiosk packages"
+      },
+      "allowed_packages": {
+        "name": "Allowed packages"
+      }
+    },
+    "select": {
+      "app_mode": {
+        "name": "App mode",
+        "state": {
+          "open": "Open",
+          "allowlist": "Allowlist"
+        }
       }
     }
   },
@@ -229,6 +253,20 @@
         "hidden": {
           "name": "Hidden network",
           "description": "The network does not broadcast its SSID."
+        }
+      }
+    },
+    "apply_policy": {
+      "name": "Apply policy",
+      "description": "Push a complete policy document to a tablet, the way a security profile is applied. Keys left out fall back to their least restrictive value; the network guard still refuses anything that could sever Wi-Fi or adb.",
+      "fields": {
+        "device_id": {
+          "name": "Tablet",
+          "description": "The Local MDM tablet to apply the policy to."
+        },
+        "policy": {
+          "name": "Policy",
+          "description": "The policy document: the switch keys, kiosk_packages, app_mode and allowed_packages."
         }
       }
     }
