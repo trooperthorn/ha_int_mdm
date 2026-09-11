@@ -132,3 +132,7 @@ Not yet observed: the adb dialog appearing inside kiosk with the shell fix
 update, Android 14, a Companion update over an existing install, and
 `configure_wifi` with the real network credentials (only the owner holds
 them; run it from the Home Assistant UI).
+
+## Lock splash (2026-09-11, SM-X230)
+
+Debug build installed over adb; kiosk switch cycled off/on from Home Assistant. The DPC's `KioskActivity` drew the chained shield, "MDM MANAGED" and the indeterminate bar full-screen, then Companion resumed as the top activity after the 2 s hold. Screenshot taken 1.2 s after the switch call.

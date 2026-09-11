@@ -39,6 +39,7 @@
         <activity
             android:name=".KioskActivity"
             android:exported="false"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar.Fullscreen"
             android:launchMode="singleTask"
             android:excludeFromRecents="true" />
 
