@@ -22,4 +22,4 @@
   reading the updater's posted notification or Samsung's Knox update API to
   surface "update available" on One UI.
 
-- Kiosk lock splash: draw a full-screen lock emblem in `KioskActivity` for ~2 s before launching the kiosk package at boot and on re-assert, so the tablet visibly reads as MDM-managed; replaces the boot-logo idea (see docs/knox-sdk-assessment.md, boot logo section).
+- Kiosk lock splash: done 2026-09-11 (`KioskActivity` shows the chained shield and MDM MANAGED for 2 s before launching the kiosk package, at boot and on re-assert). Boot-logo background in docs/knox-sdk-assessment.md.
