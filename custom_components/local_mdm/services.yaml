@@ -1,0 +1,17 @@
+install_package:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: local_mdm
+    url:
+      required: true
+      example: "https://github.com/home-assistant/android/releases/download/2026.6.5/app-full-release.apk"
+      selector:
+        text:
+    sha256:
+      required: false
+      example: "c14a0a15ea6e4ff4f37993f6d621f99cac8614d59312866e7c95fd8f65af4c04"
+      selector:
+        text:

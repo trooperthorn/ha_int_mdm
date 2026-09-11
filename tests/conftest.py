@@ -75,6 +75,7 @@ class FakeClient:
         self.webhook_url: str | None = None
         self.policy_calls: list[tuple[dict[str, Any], int]] = []
         self.lock_calls = 0
+        self.install_calls: list[tuple[str, str | None]] = []
         self.fail_with: Exception | None = None
         self.webhook_fail_with: Exception | None = None
 
@@ -104,6 +105,10 @@ class FakeClient:
     async def async_lock_screen(self) -> None:
         self._raise_if_failing()
         self.lock_calls += 1
+
+    async def async_install_package(self, url: str, sha256: str | None = None) -> None:
+        self._raise_if_failing()
+        self.install_calls.append((url, sha256))
 
 
 @pytest.fixture

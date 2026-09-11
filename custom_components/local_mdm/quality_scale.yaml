@@ -1,23 +1,21 @@
 rules:
   # Bronze
   action-setup:
-    status: exempt
-    comment: No custom actions; immediate actions are button entities.
+    status: done
+    comment: install_package is registered in async_setup with a device selector.
   appropriate-polling:
     status: done
     comment: local_push via webhook; polling is a configurable fallback (default 60 s).
   brands:
-    status: todo
-    comment: No brand images yet; see docs/backlog.md.
+    status: done
+    comment: brand/icon.png and brand/logo.png ship locally (HA 2026.3+ brands proxy).
   common-modules: done
   config-flow-test-coverage: done
   config-flow: done
   dependency-transparency:
     status: done
     comment: No runtime requirements beyond core's aiohttp.
-  docs-actions:
-    status: exempt
-    comment: No custom actions.
+  docs-actions: done
   docs-high-level-description: done
   docs-installation-instructions: done
   docs-removal-instructions: done

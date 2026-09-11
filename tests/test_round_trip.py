@@ -6,6 +6,7 @@ import time
 from http import HTTPStatus
 
 import pytest
+import voluptuous as vol
 from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.exceptions import HomeAssistantError
 
@@ -188,3 +189,43 @@ async def test_new_policy_flags_have_switches(hass, setup_entry, fake_client: Fa
         assert hass.states.get(entity_id).state == STATE_ON
     assert fake_client.policy_calls[-1][0]["auto_os_updates"] is True
     assert fake_client.policy_calls[-1][0]["stay_awake_on_power"] is True
+
+
+async def test_install_package_action(hass, setup_entry, fake_client: FakeClient):
+    from homeassistant.exceptions import ServiceValidationError
+    from homeassistant.helpers import device_registry as dr
+
+    device = dr.async_get(hass).async_get_device_by_identifier(
+        ("local_mdm", "tablet-kitchen"), setup_entry.entry_id
+    )
+    await hass.services.async_call(
+        "local_mdm",
+        "install_package",
+        {
+            "device_id": device.id,
+            "url": "https://github.com/home-assistant/android/releases/download/2026.6.5/app-full-release.apk",
+            "sha256": "sha256:" + "C" * 64,
+        },
+        blocking=True,
+    )
+    assert fake_client.install_calls == [
+        (
+            "https://github.com/home-assistant/android/releases/download/2026.6.5/app-full-release.apk",
+            "c" * 64,
+        )
+    ]
+
+    with pytest.raises(ServiceValidationError):
+        await hass.services.async_call(
+            "local_mdm",
+            "install_package",
+            {"device_id": "not-a-device", "url": "https://example.invalid/a.apk"},
+            blocking=True,
+        )
+    with pytest.raises(vol.Invalid):
+        await hass.services.async_call(
+            "local_mdm",
+            "install_package",
+            {"device_id": device.id, "url": "ftp://example.invalid/a.apk"},
+            blocking=True,
+        )

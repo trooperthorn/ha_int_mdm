@@ -49,10 +49,37 @@ the owner once the tablet is provisioned if that exposure is unwanted.
 
 Companion is installed from GitHub releases, not Google Play, on a tablet with
 no Google account. The DPC reports the installed version in
-`sensor.<tablet>_kiosk_app_version`, and the core `github` integration's
-latest release sensor for `home-assistant/android` gives the newest tag. The
-silent install action that closes that loop is written but not yet routed;
-see docs/backlog.md for the decision that is pending.
+`sensor.<tablet>_kiosk_app_version`; the `local_mdm.install_package` action
+downloads and silently installs an APK. Android only accepts an update signed
+with the same key as the installed Companion, so the URL cannot substitute
+another app.
+
+The core `github` integration's latest release sensor for
+`home-assistant/android` gives the newest tag; the asset URL follows from it.
+The digest is optional because the platform signature check is the stronger
+control, and the GitHub REST API publishes one per asset if you want it:
+
+```yaml
+automation:
+  - alias: Tablets follow the Companion release
+    triggers:
+      - trigger: state
+        entity_id: sensor.home_assistant_android_latest_release
+    conditions:
+      - condition: template
+        value_template: >-
+          {{ trigger.to_state.state not in ['unknown', 'unavailable']
+             and trigger.to_state.state != states('sensor.tablet_kitchen_kiosk_app_version').split('-')[0] }}
+    actions:
+      - action: local_mdm.install_package
+        data:
+          device_id: 0123456789abcdef0123456789abcdef  # the tablet device id
+          url: "https://github.com/home-assistant/android/releases/download/{{ trigger.to_state.state }}/app-full-release.apk"
+```
+
+The Companion `versionName` carries a `-full` suffix; the template strips it
+before comparing with the release tag. Watch `sensor.<tablet>_last_install`
+for `installed` or `failed` with its `message` attribute.
 
 ## Provisioning order for a new wall tablet
 

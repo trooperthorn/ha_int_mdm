@@ -130,3 +130,14 @@ class LocalMdmCoordinator(DataUpdateCoordinator[DeviceStatus]):
             raise ConfigEntryAuthFailed(str(err)) from err
         except LocalMdmConnectionError as err:
             raise HomeAssistantError(f"Could not lock the screen: {err}") from err
+
+    async def async_install_package(self, url: str, sha256: str | None) -> None:
+        """Start a silent APK install; the result arrives as a report."""
+        try:
+            await self.client.async_install_package(url, sha256)
+        except LocalMdmAuthError as err:
+            raise ConfigEntryAuthFailed(str(err)) from err
+        except LocalMdmPolicyRefusedError as err:
+            raise HomeAssistantError(f"DPC refused the install: {err}") from err
+        except LocalMdmConnectionError as err:
+            raise HomeAssistantError(f"Could not start the install: {err}") from err

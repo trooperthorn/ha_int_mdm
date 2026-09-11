@@ -1,50 +1,127 @@
 {
   "entity": {
     "switch": {
-      "kiosk_mode": { "default": "mdi:tablet-lock" },
-      "camera_disabled": { "default": "mdi:camera-off" },
-      "screen_capture_disabled": { "default": "mdi:monitor-off" },
-      "status_bar_disabled": { "default": "mdi:dock-top" },
-      "install_apps_blocked": { "default": "mdi:package-variant-closed-remove" },
-      "uninstall_apps_blocked": { "default": "mdi:package-variant-closed-check" },
-      "usb_file_transfer_blocked": { "default": "mdi:usb-port" },
-      "adjust_volume_blocked": { "default": "mdi:volume-off" },
-      "safe_boot_blocked": { "default": "mdi:shield-refresh" },
-      "factory_reset_blocked": { "default": "mdi:shield-alert" },
-      "auto_os_updates": { "default": "mdi:update" },
-      "stay_awake_on_power": { "default": "mdi:power-plug" }
+      "kiosk_mode": {
+        "default": "mdi:tablet-lock"
+      },
+      "camera_disabled": {
+        "default": "mdi:camera-off"
+      },
+      "screen_capture_disabled": {
+        "default": "mdi:monitor-off"
+      },
+      "status_bar_disabled": {
+        "default": "mdi:dock-top"
+      },
+      "install_apps_blocked": {
+        "default": "mdi:package-variant-closed-remove"
+      },
+      "uninstall_apps_blocked": {
+        "default": "mdi:package-variant-closed-check"
+      },
+      "usb_file_transfer_blocked": {
+        "default": "mdi:usb-port"
+      },
+      "adjust_volume_blocked": {
+        "default": "mdi:volume-off"
+      },
+      "safe_boot_blocked": {
+        "default": "mdi:shield-refresh"
+      },
+      "factory_reset_blocked": {
+        "default": "mdi:shield-alert"
+      },
+      "auto_os_updates": {
+        "default": "mdi:update"
+      },
+      "stay_awake_on_power": {
+        "default": "mdi:power-plug"
+      }
     },
     "binary_sensor": {
-      "device_owner": { "default": "mdi:shield-account" },
-      "enforcement_problem": { "default": "mdi:alert-circle" },
-      "kiosk_mode_enforced": { "default": "mdi:tablet-lock" },
-      "camera_disabled_enforced": { "default": "mdi:camera-off" },
-      "screen_capture_disabled_enforced": { "default": "mdi:monitor-off" },
-      "status_bar_disabled_enforced": { "default": "mdi:dock-top" },
-      "install_apps_blocked_enforced": { "default": "mdi:package-variant-closed-remove" },
-      "uninstall_apps_blocked_enforced": { "default": "mdi:package-variant-closed-check" },
-      "usb_file_transfer_blocked_enforced": { "default": "mdi:usb-port" },
-      "adjust_volume_blocked_enforced": { "default": "mdi:volume-off" },
-      "safe_boot_blocked_enforced": { "default": "mdi:shield-refresh" },
-      "factory_reset_blocked_enforced": { "default": "mdi:shield-alert" },
-      "auto_os_updates_enforced": { "default": "mdi:update" },
-      "stay_awake_on_power_enforced": { "default": "mdi:power-plug" }
+      "device_owner": {
+        "default": "mdi:shield-account"
+      },
+      "enforcement_problem": {
+        "default": "mdi:alert-circle"
+      },
+      "kiosk_mode_enforced": {
+        "default": "mdi:tablet-lock"
+      },
+      "camera_disabled_enforced": {
+        "default": "mdi:camera-off"
+      },
+      "screen_capture_disabled_enforced": {
+        "default": "mdi:monitor-off"
+      },
+      "status_bar_disabled_enforced": {
+        "default": "mdi:dock-top"
+      },
+      "install_apps_blocked_enforced": {
+        "default": "mdi:package-variant-closed-remove"
+      },
+      "uninstall_apps_blocked_enforced": {
+        "default": "mdi:package-variant-closed-check"
+      },
+      "usb_file_transfer_blocked_enforced": {
+        "default": "mdi:usb-port"
+      },
+      "adjust_volume_blocked_enforced": {
+        "default": "mdi:volume-off"
+      },
+      "safe_boot_blocked_enforced": {
+        "default": "mdi:shield-refresh"
+      },
+      "factory_reset_blocked_enforced": {
+        "default": "mdi:shield-alert"
+      },
+      "auto_os_updates_enforced": {
+        "default": "mdi:update"
+      },
+      "stay_awake_on_power_enforced": {
+        "default": "mdi:power-plug"
+      }
     },
     "sensor": {
-      "policy_version": { "default": "mdi:counter" },
-      "dpc_version": { "default": "mdi:tag" },
-      "enforcement_failures": { "default": "mdi:alert-octagon" },
-      "last_report": { "default": "mdi:clock-check" },
-      "os_version": { "default": "mdi:android" },
-      "security_patch": { "default": "mdi:shield-check" },
-      "kiosk_app_version": { "default": "mdi:home-assistant" },
-      "last_install": { "default": "mdi:package-down" }
+      "policy_version": {
+        "default": "mdi:counter"
+      },
+      "dpc_version": {
+        "default": "mdi:tag"
+      },
+      "enforcement_failures": {
+        "default": "mdi:alert-octagon"
+      },
+      "last_report": {
+        "default": "mdi:clock-check"
+      },
+      "os_version": {
+        "default": "mdi:android"
+      },
+      "security_patch": {
+        "default": "mdi:shield-check"
+      },
+      "kiosk_app_version": {
+        "default": "mdi:home-assistant"
+      },
+      "last_install": {
+        "default": "mdi:package-down"
+      }
     },
     "button": {
-      "lock_screen": { "default": "mdi:lock" }
+      "lock_screen": {
+        "default": "mdi:lock"
+      }
     },
     "text": {
-      "kiosk_packages": { "default": "mdi:apps" }
+      "kiosk_packages": {
+        "default": "mdi:apps"
+      }
+    }
+  },
+  "services": {
+    "install_package": {
+      "service": "mdi:package-down"
     }
   }
 }

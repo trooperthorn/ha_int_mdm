@@ -183,6 +183,17 @@ class LocalMdmClient:
         """Lock the tablet screen immediately."""
         await self._request("POST", "/actions/lock_screen")
 
+    async def async_install_package(self, url: str, sha256: str | None = None) -> None:
+        """Ask the DPC to download and silently install an APK.
+
+        The DPC answers 202 as soon as the download starts; progress and the
+        outcome arrive through the status document's ``last_install``.
+        """
+        body: dict[str, str] = {"url": url}
+        if sha256:
+            body["sha256"] = sha256.lower().removeprefix("sha256:")
+        await self._request("POST", "/actions/install_package", body)
+
 
 async def _safe_text(response: aiohttp.ClientResponse) -> str:
     try:

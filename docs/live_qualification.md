@@ -62,7 +62,21 @@ asks the service for a report 750 ms after `startLockTask` or `stopLockTask`.
 | Kiosk as HOME | with kiosk on, `resolve-activity HOME` is `KioskHome`; with kiosk off it is the launcher again | pass |
 | Reboot into kiosk | kiosk on, `adb reboot`, no push from HA: `lock_task_active` true after boot and HA received the boot report | pass |
 
-Not yet observed: a Samsung tablet, Android 14, the kiosk hand-off when the
-target package is the Home Assistant Companion app itself (the emulator has
-no Companion installed; `com.android.settings` stood in), a real pending OS
-update on hardware, and the package install action (see backlog).
+## 2026-09-11: Companion installed and run in kiosk through the HA action (live HA, emulator)
+
+| Check | How | Result |
+| --- | --- | --- |
+| `local_mdm.install_package` | Companion 2026.6.5 `app-full-release.apk` from GitHub with the published digest; `last_install` went `downloading`, `installing`, `installed` | pass, 20 s from action to installed |
+| Install result attributes | `package` io.homeassistant.companion.android, `message` INSTALL_SUCCEEDED | pass |
+| Kiosk app version sensor | `2026.6.5-full` after the package-visibility fix | pass |
+| Kiosk with Companion as the target | `topResumedActivity` is Companion's LaunchActivity, `lock_task_active` true, screenshot shows Companion's onboarding | pass |
+| Bad URL scheme | `ftp://` returns 400 from the DPC and `vol.Invalid` from the action schema | pass |
+
+Found and fixed during this pass: without a `<queries>` element the DPC on
+Android 11 and newer could neither read another package's version nor obtain
+its launch intent, so the version sensor read unknown and kiosk engaged
+around whatever task was already on screen.
+
+Not yet observed: a Samsung tablet, Android 14, a real pending OS update on
+hardware, and a Companion update (same package, newer version) rather than a
+first install.

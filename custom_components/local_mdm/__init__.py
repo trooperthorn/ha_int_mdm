@@ -11,7 +11,9 @@ from homeassistant.components import webhook
 from homeassistant.const import CONF_HOST, CONF_PORT, Platform
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.typing import ConfigType
 
 from .api import LocalMdmAuthError, LocalMdmClient, LocalMdmConnectionError
 from .const import (
@@ -22,8 +24,11 @@ from .const import (
     DOMAIN,
 )
 from .coordinator import LocalMdmConfigEntry, LocalMdmCoordinator
+from .services import async_setup_services
 
 _LOGGER = logging.getLogger(__name__)
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
@@ -32,6 +37,12 @@ PLATFORMS: list[Platform] = [
     Platform.SWITCH,
     Platform.TEXT,
 ]
+
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Register actions once per Home Assistant run."""
+    async_setup_services(hass)
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: LocalMdmConfigEntry) -> bool:

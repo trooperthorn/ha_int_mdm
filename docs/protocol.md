@@ -14,9 +14,11 @@ real tablet.
 | `PUT /v1/policy` | `{"version": n, "policy": {...}}` | status document after apply | same |
 | `PUT /v1/webhook` | `{"url": "http://ha:8123/api/webhook/<id>"}` | `{"ok": true}` | same |
 | `POST /v1/actions/lock_screen` | none | `{"ok": true}` | same |
+| `POST /v1/actions/install_package` | `{"url": "https://...apk", "sha256": "<64 hex, optional>"}` | 202 `{"ok": true}` once the download starts; progress and outcome arrive in `last_install` (`downloading`, `installing`, `installed`, `failed`) | verified on the emulator with the Companion release |
 
-Error codes: 401 bad token, 400 malformed JSON or unknown key, 422 unsafe
-policy or not Device Owner or `lockNow` refused, 404 anything else.
+Error codes: 401 bad token, 400 malformed JSON, unknown key, or a bad URL or
+digest, 422 unsafe policy, not Device Owner, `lockNow` refused, or an install
+already running, 404 anything else.
 
 ## Webhook from the tablet to Home Assistant
 
@@ -49,7 +51,11 @@ non-JSON, 422 when the report's `device_id` is not the entry's tablet.
 2 windowed, 3 postpone). When `pending` is true the object also carries
 `received_at` and `security_patch_state` from `getPendingSystemUpdate`.
 `installed` maps each kiosk package to its installed `versionName`, or null
-when it is not installed.
+when it is not installed. `last_install`, when present, carries `state`,
+`url`, `package`, `message`, and `at` for the most recent install action.
+Android refuses an update signed with a different key than the installed
+package, so a URL cannot replace an app with a look-alike; the sha256 adds
+transport integrity only.
 
 `enforcement` values: `applied`, `failed` (a RuntimeException from the
 platform), `refused` (SecurityException, or not Device Owner).
