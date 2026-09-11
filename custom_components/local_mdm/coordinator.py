@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from datetime import timedelta
 from typing import Any
 
@@ -23,6 +24,10 @@ from .const import DOMAIN, POLICY_KIOSK_PACKAGES
 from .policy import InvalidPolicyError, UnsafePolicyError, default_policy, validate_policy
 
 _LOGGER = logging.getLogger(__name__)
+
+# A report that disagrees with the desired policy triggers one re-push, at
+# most this often, so a tablet that keeps refusing cannot be hammered.
+RECONCILE_MIN_INTERVAL = 30.0
 
 type LocalMdmConfigEntry = ConfigEntry[LocalMdmCoordinator]
 
@@ -50,6 +55,7 @@ class LocalMdmCoordinator(DataUpdateCoordinator[DeviceStatus]):
         self.desired_policy: dict[str, Any] = default_policy()
         self._policy_version = 0
         self._push_lock = asyncio.Lock()
+        self._last_reconcile: float | None = None
 
     async def _async_setup(self) -> None:
         # The tablet's applied policy is the source of truth after a restart;
@@ -65,7 +71,40 @@ class LocalMdmCoordinator(DataUpdateCoordinator[DeviceStatus]):
         self._policy_version = status.policy_version
 
     async def _async_update_data(self) -> DeviceStatus:
-        return await self._fetch()
+        status = await self._fetch()
+        self._reconcile_if_drifted(status)
+        return status
+
+    def _reconcile_if_drifted(self, status: DeviceStatus) -> None:
+        """Re-push the desired policy when the tablet reports a different one.
+
+        A push sent while the tablet is still booting can be acknowledged and
+        then lost to the boot-time re-apply (seen after a firmware update on
+        2026-09-11). Home Assistant owns the desired policy after setup, so a
+        report that disagrees is drift, not a new source of truth.
+        """
+        if self.data is None or self._push_lock.locked():
+            return
+        try:
+            reported = validate_policy(status.policy)
+        except UnsafePolicyError, InvalidPolicyError:
+            return
+        if reported == self.desired_policy:
+            return
+        now = time.monotonic()
+        if self._last_reconcile is not None and now - self._last_reconcile < RECONCILE_MIN_INTERVAL:
+            return
+        self._last_reconcile = now
+        _LOGGER.info("Tablet policy drifted from the desired policy; re-pushing")
+        self.config_entry.async_create_background_task(
+            self.hass, self._reconcile(), f"{DOMAIN}_reconcile"
+        )
+
+    async def _reconcile(self) -> None:
+        try:
+            await self.async_apply_policy(self.desired_policy)
+        except HomeAssistantError as err:
+            _LOGGER.warning("Re-push after drift failed: %s", err)
 
     async def _fetch(self) -> DeviceStatus:
         try:
@@ -91,6 +130,7 @@ class LocalMdmCoordinator(DataUpdateCoordinator[DeviceStatus]):
             return False
         self._policy_version = max(self._policy_version, status.policy_version)
         self.async_set_updated_data(status)
+        self._reconcile_if_drifted(status)
         return True
 
     async def async_set_policy_flag(self, key: str, value: bool) -> None:

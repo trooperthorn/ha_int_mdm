@@ -6,6 +6,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.net.wifi.WifiConfiguration
 import android.net.wifi.WifiManager
+import android.os.Build
 import android.util.Log
 
 /**
@@ -30,7 +31,9 @@ class Wifi(private val context: Context) {
                 DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED,
             )
         }
-        runCatching { dpm.setLocationEnabled(admin, true) }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            runCatching { dpm.setLocationEnabled(admin, true) }
+        }
     }
 
     fun isEnabled(): Boolean = wifi.isWifiEnabled
@@ -55,18 +58,28 @@ class Wifi(private val context: Context) {
             }
         }
         ensureEnabled()
-        val result = wifi.addNetworkPrivileged(config)
-        if (result.statusCode != WifiManager.AddNetworkResult.STATUS_SUCCESS) {
-            throw IllegalStateException("addNetworkPrivileged status ${result.statusCode}")
+        val networkId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val result = wifi.addNetworkPrivileged(config)
+            if (result.statusCode != WifiManager.AddNetworkResult.STATUS_SUCCESS) {
+                throw IllegalStateException("addNetworkPrivileged status ${result.statusCode}")
+            }
+            result.networkId
+        } else {
+            // Android 9/10 (Fire OS 7): the pre-S path, still honoured for a
+            // Device Owner, which owns the configured-network store.
+            @Suppress("DEPRECATION")
+            val id = wifi.addNetwork(config)
+            if (id < 0) throw IllegalStateException("addNetwork returned $id")
+            id
         }
         // disableOthers must stay false: true drops the current connection to
         // try the new network, which took a Galaxy Tab off the LAN for several
         // seconds on 2026-09-11. Android joins the new network on its own when
         // the current one is gone.
         @Suppress("DEPRECATION")
-        wifi.enableNetwork(result.networkId, false)
-        Log.i(TAG, "Configured network id ${result.networkId}")
-        return result.networkId
+        wifi.enableNetwork(networkId, false)
+        Log.i(TAG, "Configured network id $networkId")
+        return networkId
     }
 
     @Volatile private var lastSsid: String? = null
