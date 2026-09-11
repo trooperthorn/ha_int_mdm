@@ -34,6 +34,9 @@ POLICY_FACTORY_RESET_BLOCKED: Final = "factory_reset_blocked"
 POLICY_AUTO_OS_UPDATES: Final = "auto_os_updates"
 POLICY_STAY_AWAKE_ON_POWER: Final = "stay_awake_on_power"
 POLICY_WIFI_ALWAYS_ON: Final = "wifi_always_on"
+# Account and user locks (Pixel plan, docs/pixel-tablet-profiles.md).
+POLICY_ACCOUNTS_LOCKED: Final = "accounts_locked"
+POLICY_ADD_USER_BLOCKED: Final = "add_user_blocked"
 
 POLICY_FLAGS: Final[tuple[str, ...]] = (
     POLICY_KIOSK_MODE,
@@ -49,11 +52,23 @@ POLICY_FLAGS: Final[tuple[str, ...]] = (
     POLICY_AUTO_OS_UPDATES,
     POLICY_STAY_AWAKE_ON_POWER,
     POLICY_WIFI_ALWAYS_ON,
+    POLICY_ACCOUNTS_LOCKED,
+    POLICY_ADD_USER_BLOCKED,
 )
 
 COMPANION_PACKAGE: Final = "io.homeassistant.companion.android"
 
 POLICY_KIOSK_PACKAGES: Final = "kiosk_packages"
+
+# App mode: open leaves the launcher alone; allowlist suspends every other
+# launchable package so the stock launcher, notifications and Hub Mode keep
+# working while only the listed apps open. kiosk_mode stays the single-app
+# lock task and wins over app_mode while it is on.
+POLICY_APP_MODE: Final = "app_mode"
+POLICY_ALLOWED_PACKAGES: Final = "allowed_packages"
+APP_MODE_OPEN: Final = "open"
+APP_MODE_ALLOWLIST: Final = "allowlist"
+APP_MODES: Final[tuple[str, ...]] = (APP_MODE_OPEN, APP_MODE_ALLOWLIST)
 
 ENFORCEMENT_APPLIED: Final = "applied"
 ENFORCEMENT_FAILED: Final = "failed"

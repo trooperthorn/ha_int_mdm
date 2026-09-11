@@ -97,10 +97,62 @@ class PolicyEngine(private val context: Context, private val store: PolicyStore)
                 throw IllegalStateException("setWifiEnabled refused")
             }
         }
+        result[Policy.KEY_ACCOUNTS_LOCKED] =
+            restriction(UserManager.DISALLOW_MODIFY_ACCOUNTS, policy.accountsLocked)
+        result[Policy.KEY_ADD_USER_BLOCKED] =
+            restriction(UserManager.DISALLOW_ADD_USER, policy.addUserBlocked)
         result[Policy.KEY_KIOSK_MODE] = attempt { applyKiosk(policy) }
+        result[Policy.KEY_APP_MODE] = applyAppMode(policy)
 
         store.enforcement = result
         return result
+    }
+
+    /**
+     * allowlist: suspend every launchable package that is not allowed, so the
+     * stock launcher, notifications and Hub Mode keep working while only the
+     * listed apps open (a suspended app greys out and shows the system
+     * dialog). open: lift whatever this DPC suspended. Never touched: this
+     * package, the adb shell, Settings, the system UI, the Play Store (the
+     * installer of record, which Android refuses to suspend; install_apps_blocked
+     * covers it), any HOME launcher, and the kiosk target (already folded into
+     * allowedPackages). A package the platform still refuses is logged and the
+     * key reports `limited`, so Home Assistant shows the gap without calling
+     * the whole allowlist a failure.
+     */
+    private fun applyAppMode(policy: Policy): String {
+        val pm = context.packageManager
+        val wanted: Set<String> = if (policy.appMode == Policy.APP_MODE_ALLOWLIST) {
+            val keep = policy.allowedPackages.toMutableSet()
+            keep += context.packageName
+            keep += ADB_SHELL_PACKAGE
+            keep += SETTINGS_PACKAGE
+            keep += SYSTEM_UI_PACKAGE
+            keep += PLAY_STORE_PACKAGE
+            val home = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+            keep += pm.queryIntentActivities(home, 0).map { it.activityInfo.packageName }
+            val launcher = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+            pm.queryIntentActivities(launcher, 0)
+                .map { it.activityInfo.packageName }
+                .filter { it !in keep }
+                .toSortedSet()
+        } else {
+            emptySet()
+        }
+        val before = store.suspendedPackages.toSet()
+        val lift = (before - wanted).toTypedArray()
+        val hold = wanted.toTypedArray()
+        val stuck = mutableListOf<String>()
+        val outcome = attempt {
+            if (lift.isNotEmpty()) stuck += dpm.setPackagesSuspended(admin, lift, false)
+            if (hold.isNotEmpty()) stuck += dpm.setPackagesSuspended(admin, hold, true)
+        }
+        store.suspendedPackages = (wanted - stuck.toSet()).toList()
+        store.unsuspendable = stuck.sorted()
+        if (outcome != "applied") return outcome
+        if (stuck.isEmpty()) return "applied"
+        Log.w(TAG, "Platform refused to change suspension of ${stuck.joinToString()}")
+        return LIMITED
     }
 
     /**
@@ -115,6 +167,7 @@ class PolicyEngine(private val context: Context, private val store: PolicyStore)
     private fun applyLite(policy: Policy): Map<String, String> {
         val result = LinkedHashMap<String, String>()
         for (key in Policy.FLAG_KEYS) result[key] = UNSUPPORTED
+        result[Policy.KEY_APP_MODE] = UNSUPPORTED
         result[Policy.KEY_CAMERA_DISABLED] = attempt { dpm.setCameraDisabled(admin, policy.cameraDisabled) }
         result[Policy.KEY_STAY_AWAKE_ON_POWER] = if (!canWriteSecureSettings) UNSUPPORTED else attempt {
             Settings.Global.putString(
@@ -249,6 +302,7 @@ class PolicyEngine(private val context: Context, private val store: PolicyStore)
             put("policy", store.policy.toJson())
             put("enforcement", JSONObject(store.enforcement))
             put("lock_task_active", isLockTaskActive())
+            put("unsuspendable", org.json.JSONArray(store.unsuspendable))
             put("battery", JSONObject().put("level", level).put("charging", charging))
             put(
                 "network",
@@ -302,6 +356,9 @@ class PolicyEngine(private val context: Context, private val store: PolicyStore)
     companion object {
         private const val TAG = "LocalMdm.Policy"
         private const val ADB_SHELL_PACKAGE = "com.android.shell"
+        private const val SETTINGS_PACKAGE = "com.android.settings"
+        private const val SYSTEM_UI_PACKAGE = "com.android.systemui"
+        private const val PLAY_STORE_PACKAGE = "com.android.vending"
         const val TIER_OWNER = "owner"
         const val TIER_ADMIN = "admin"
         const val TIER_NONE = "none"

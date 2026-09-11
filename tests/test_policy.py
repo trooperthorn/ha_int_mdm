@@ -14,8 +14,11 @@ from custom_components.local_mdm.policy import (
 
 def test_default_policy_is_least_restrictive():
     policy = default_policy()
-    assert all(value is False for key, value in policy.items() if key != "kiosk_packages")
+    lists = {"kiosk_packages", "allowed_packages"}
+    assert all(value is False for key, value in policy.items() if key not in lists | {"app_mode"})
     assert policy["kiosk_packages"] == []
+    assert policy["allowed_packages"] == []
+    assert policy["app_mode"] == "open"
 
 
 @pytest.mark.parametrize("key", sorted(FORBIDDEN_KEYS))
@@ -57,3 +60,23 @@ def test_partial_policy_is_normalized_to_full_document():
     assert result["kiosk_mode"] is False
     assert result["kiosk_packages"] == ["a.app", "b.app"]
     assert set(result) == set(default_policy())
+
+
+def test_app_mode_defaults_open_and_rejects_unknown() -> None:
+    assert validate_policy({})["app_mode"] == "open"
+    assert validate_policy({})["allowed_packages"] == []
+    with pytest.raises(InvalidPolicyError):
+        validate_policy({"app_mode": "lock_task_multi"})
+
+
+def test_allowlist_keeps_kiosk_target_and_refuses_empty() -> None:
+    result = validate_policy(
+        {
+            "app_mode": "allowlist",
+            "allowed_packages": ["b.app", DPC_PACKAGE],
+            "kiosk_packages": ["a.app"],
+        }
+    )
+    assert result["allowed_packages"] == ["a.app", "b.app"]
+    with pytest.raises(UnsafePolicyError):
+        validate_policy({"app_mode": "allowlist", "allowed_packages": [DPC_PACKAGE]})

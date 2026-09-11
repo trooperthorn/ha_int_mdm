@@ -109,6 +109,20 @@ new keys), then 1 if the per-tablet edits become annoying.
   the DPC never sets a password policy (out of scope, and the reason is the
   same as for network: a wrong policy must never strand the tablet).
 
+## Status (2026-09-11)
+
+Steps 1, 2 and the action half of 4 shipped: `app_mode` (`open` /
+`allowlist`), `allowed_packages`, `accounts_locked`, `add_user_blocked`, the
+`select.<tablet>_app_mode` and `text.<tablet>_allowed_packages` entities, and
+the `local_mdm.apply_policy` action that a YAML profile package drives
+(docs/examples/security_profiles.yaml). Qualified on the Pixel Tablet
+(Android 16) as Device Owner: see docs/live_qualification.md. Chosen: the
+allowlist on the stock launcher, profiles in a YAML package.
+
+Not started: `lock_task_multi` with the DPC grid launcher,
+`notifications_in_kiosk`, `settings_in_kiosk`, and profiles as integration
+options.
+
 ## Order of work if approved
 
 1. Protocol keys and the forbidden-key checks on both sides, with tests.

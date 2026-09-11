@@ -1,4 +1,4 @@
-"""Text entity holding the comma-separated kiosk package list."""
+"""Text entities holding the comma-separated kiosk and allowed package lists."""
 
 from __future__ import annotations
 
@@ -7,14 +7,13 @@ from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import POLICY_KIOSK_PACKAGES
+from .const import POLICY_ALLOWED_PACKAGES, POLICY_KIOSK_PACKAGES
 from .coordinator import LocalMdmConfigEntry
 from .entity import LocalMdmEntity
 
-KIOSK_PACKAGES = TextEntityDescription(
-    key=POLICY_KIOSK_PACKAGES,
-    translation_key=POLICY_KIOSK_PACKAGES,
-    entity_category=EntityCategory.CONFIG,
+TEXTS: tuple[TextEntityDescription, ...] = tuple(
+    TextEntityDescription(key=key, translation_key=key, entity_category=EntityCategory.CONFIG)
+    for key in (POLICY_KIOSK_PACKAGES, POLICY_ALLOWED_PACKAGES)
 )
 
 
@@ -23,20 +22,20 @@ async def async_setup_entry(
     entry: LocalMdmConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Create the kiosk package list entity."""
-    async_add_entities([LocalMdmKioskPackagesText(entry.runtime_data, KIOSK_PACKAGES)])
+    """Create the package list entities."""
+    async_add_entities(LocalMdmPackagesText(entry.runtime_data, d) for d in TEXTS)
 
 
-class LocalMdmKioskPackagesText(LocalMdmEntity, TextEntity):
-    """Package names allowed in kiosk mode, separated by commas."""
+class LocalMdmPackagesText(LocalMdmEntity, TextEntity):
+    """A package-name list of the desired policy, separated by commas."""
 
     _attr_native_max = 1024
     _attr_native_min = 0
 
     @property
     def native_value(self) -> str:
-        return ",".join(self.coordinator.desired_policy.get(POLICY_KIOSK_PACKAGES, []))
+        return ",".join(self.coordinator.desired_policy.get(self.entity_description.key, []))
 
     async def async_set_value(self, value: str) -> None:
         packages = [part.strip() for part in value.split(",") if part.strip()]
-        await self.coordinator.async_set_kiosk_packages(packages)
+        await self.coordinator.async_set_policy_value(self.entity_description.key, packages)

@@ -1,0 +1,131 @@
+# Security profiles for Local MDM tablets, as a Home Assistant package.
+#
+# A profile is a complete policy document. Picking one in the per-tablet
+# input_select pushes it through local_mdm.apply_policy; keys left out fall
+# back to their least restrictive value, and the integration's network guard
+# still runs. The Local MDM switches keep showing what is enforced, so a
+# manual switch change is visible and the next profile change overrides it.
+#
+# Fill in the device ids from Settings > Devices > the tablet's page URL.
+# Only the Pixel-style tablet gets app_mode allowlist; the console tablets
+# stay single-app kiosk.
+
+input_select:
+  pixel_security_profile:
+    name: Pixel security profile
+    icon: mdi:shield-account
+    options: [console, family, guest, locked]
+    initial: family
+
+script:
+  apply_security_profile:
+    alias: Apply security profile
+    description: Push one named profile to one Local MDM tablet.
+    mode: queued
+    fields:
+      device_id:
+        description: Local MDM tablet
+        required: true
+        selector:
+          device:
+            integration: local_mdm
+      profile:
+        description: console, family, guest or locked
+        required: true
+        selector:
+          select:
+            options: [console, family, guest, locked]
+    variables:
+      companion: io.homeassistant.companion.android
+      family_apps:
+        - io.homeassistant.companion.android
+        - com.google.android.apps.youtube.kids
+        - com.google.android.youtube
+        - com.google.android.calculator
+        - com.google.android.apps.chromecast.app
+      guest_apps:
+        - io.homeassistant.companion.android
+        - com.google.android.youtube
+      profiles:
+        # Home Assistant only, single-app lock task, dock experience off.
+        console:
+          kiosk_mode: true
+          kiosk_packages: ["{{ companion }}"]
+          app_mode: open
+          stay_awake_on_power: true
+          wifi_always_on: true
+          accounts_locked: true
+          add_user_blocked: true
+          install_apps_blocked: true
+          uninstall_apps_blocked: true
+          factory_reset_blocked: true
+          safe_boot_blocked: true
+          auto_os_updates: true
+        # Stock launcher and Hub Mode stay; only the listed apps open.
+        family:
+          kiosk_mode: false
+          kiosk_packages: ["{{ companion }}"]
+          app_mode: allowlist
+          allowed_packages: "{{ family_apps }}"
+          stay_awake_on_power: true
+          wifi_always_on: true
+          accounts_locked: true
+          add_user_blocked: true
+          install_apps_blocked: true
+          uninstall_apps_blocked: true
+          factory_reset_blocked: true
+          safe_boot_blocked: true
+          auto_os_updates: true
+        # A visitor: fewer apps, camera off, nothing about the account.
+        guest:
+          kiosk_mode: false
+          kiosk_packages: ["{{ companion }}"]
+          app_mode: allowlist
+          allowed_packages: "{{ guest_apps }}"
+          camera_disabled: true
+          stay_awake_on_power: true
+          wifi_always_on: true
+          accounts_locked: true
+          add_user_blocked: true
+          install_apps_blocked: true
+          uninstall_apps_blocked: true
+          factory_reset_blocked: true
+          safe_boot_blocked: true
+          auto_os_updates: true
+        # Console lockout state: same as console plus camera and capture off.
+        locked:
+          kiosk_mode: true
+          kiosk_packages: ["{{ companion }}"]
+          app_mode: open
+          camera_disabled: true
+          screen_capture_disabled: true
+          status_bar_disabled: true
+          stay_awake_on_power: true
+          wifi_always_on: true
+          accounts_locked: true
+          add_user_blocked: true
+          install_apps_blocked: true
+          uninstall_apps_blocked: true
+          usb_file_transfer_blocked: true
+          factory_reset_blocked: true
+          safe_boot_blocked: true
+          auto_os_updates: true
+    sequence:
+      - action: local_mdm.apply_policy
+        data:
+          device_id: "{{ device_id }}"
+          policy: "{{ profiles[profile] }}"
+
+automation:
+  - id: pixel_security_profile_apply
+    alias: Pixel security profile apply
+    description: Push the selected profile whenever the selector changes.
+    mode: queued
+    triggers:
+      - trigger: state
+        entity_id: input_select.pixel_security_profile
+    actions:
+      - action: script.apply_security_profile
+        data:
+          device_id: REPLACE_WITH_PIXEL_DEVICE_ID
+          profile: "{{ trigger.to_state.state }}"

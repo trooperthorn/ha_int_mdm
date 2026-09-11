@@ -67,8 +67,30 @@ async def _configure_wifi(call: ServiceCall) -> None:
     )
 
 
+SERVICE_APPLY_POLICY = "apply_policy"
+ATTR_POLICY = "policy"
+
+APPLY_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_DEVICE_ID): cv.string,
+        vol.Required(ATTR_POLICY): dict,
+    }
+)
+
+
+async def _apply_policy(call: ServiceCall) -> None:
+    """Push a whole policy document, the way a security profile is applied.
+
+    Keys left out fall back to their least restrictive value, so a profile is
+    complete by construction; the guard in policy.py still runs first.
+    """
+    coordinator = _coordinator_for_device(call.hass, call.data[ATTR_DEVICE_ID])
+    await coordinator.async_apply_policy(dict(call.data[ATTR_POLICY]))
+
+
 @callback
 def async_setup_services(hass: HomeAssistant) -> None:
     """Register the integration's actions once."""
     hass.services.async_register(DOMAIN, SERVICE_INSTALL_PACKAGE, _install_package, INSTALL_SCHEMA)
     hass.services.async_register(DOMAIN, SERVICE_CONFIGURE_WIFI, _configure_wifi, WIFI_SCHEMA)
+    hass.services.async_register(DOMAIN, SERVICE_APPLY_POLICY, _apply_policy, APPLY_SCHEMA)

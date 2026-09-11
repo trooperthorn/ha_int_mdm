@@ -141,6 +141,10 @@ class LocalMdmCoordinator(DataUpdateCoordinator[DeviceStatus]):
         """Replace the kiosk package list and push."""
         await self.async_apply_policy({**self.desired_policy, POLICY_KIOSK_PACKAGES: packages})
 
+    async def async_set_policy_value(self, key: str, value: Any) -> None:
+        """Change one non-flag value (app mode, allowed packages) and push."""
+        await self.async_apply_policy({**self.desired_policy, key: value})
+
     async def async_apply_policy(self, policy: dict[str, Any]) -> None:
         """Validate and push a full policy; raises HomeAssistantError on refusal."""
         try:

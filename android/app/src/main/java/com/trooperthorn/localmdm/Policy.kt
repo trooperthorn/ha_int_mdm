@@ -22,7 +22,11 @@ data class Policy(
     val autoOsUpdates: Boolean = false,
     val stayAwakeOnPower: Boolean = false,
     val wifiAlwaysOn: Boolean = false,
+    val accountsLocked: Boolean = false,
+    val addUserBlocked: Boolean = false,
     val kioskPackages: List<String> = emptyList(),
+    val appMode: String = APP_MODE_OPEN,
+    val allowedPackages: List<String> = emptyList(),
 ) {
     fun toJson(): JSONObject = JSONObject().apply {
         put(KEY_KIOSK_MODE, kioskMode)
@@ -38,7 +42,11 @@ data class Policy(
         put(KEY_AUTO_OS_UPDATES, autoOsUpdates)
         put(KEY_STAY_AWAKE_ON_POWER, stayAwakeOnPower)
         put(KEY_WIFI_ALWAYS_ON, wifiAlwaysOn)
+        put(KEY_ACCOUNTS_LOCKED, accountsLocked)
+        put(KEY_ADD_USER_BLOCKED, addUserBlocked)
         put(KEY_KIOSK_PACKAGES, JSONArray(kioskPackages))
+        put(KEY_APP_MODE, appMode)
+        put(KEY_ALLOWED_PACKAGES, JSONArray(allowedPackages))
     }
 
     companion object {
@@ -55,15 +63,23 @@ data class Policy(
         const val KEY_AUTO_OS_UPDATES = "auto_os_updates"
         const val KEY_STAY_AWAKE_ON_POWER = "stay_awake_on_power"
         const val KEY_WIFI_ALWAYS_ON = "wifi_always_on"
+        const val KEY_ACCOUNTS_LOCKED = "accounts_locked"
+        const val KEY_ADD_USER_BLOCKED = "add_user_blocked"
         const val KEY_KIOSK_PACKAGES = "kiosk_packages"
+        const val KEY_APP_MODE = "app_mode"
+        const val KEY_ALLOWED_PACKAGES = "allowed_packages"
+        const val APP_MODE_OPEN = "open"
+        const val APP_MODE_ALLOWLIST = "allowlist"
+        val APP_MODES = listOf(APP_MODE_OPEN, APP_MODE_ALLOWLIST)
 
         val FLAG_KEYS = listOf(
             KEY_KIOSK_MODE, KEY_CAMERA_DISABLED, KEY_SCREEN_CAPTURE_DISABLED,
             KEY_STATUS_BAR_DISABLED, KEY_INSTALL_APPS_BLOCKED, KEY_UNINSTALL_APPS_BLOCKED,
             KEY_USB_FILE_TRANSFER_BLOCKED, KEY_ADJUST_VOLUME_BLOCKED, KEY_SAFE_BOOT_BLOCKED,
             KEY_FACTORY_RESET_BLOCKED, KEY_AUTO_OS_UPDATES, KEY_STAY_AWAKE_ON_POWER,
-            KEY_WIFI_ALWAYS_ON,
+            KEY_WIFI_ALWAYS_ON, KEY_ACCOUNTS_LOCKED, KEY_ADD_USER_BLOCKED,
         )
+        val LIST_KEYS = listOf(KEY_KIOSK_PACKAGES, KEY_ALLOWED_PACKAGES)
 
         /** Keys that could sever Wi-Fi or adb, the only recovery paths. Refused on sight. */
         val FORBIDDEN_KEYS = setOf(
@@ -83,7 +99,7 @@ data class Policy(
             if (forbidden.isNotEmpty()) {
                 throw UnsafePolicy("Refusing keys that can sever the management path: $forbidden")
             }
-            val unknown = keys - FLAG_KEYS.toSet() - KEY_KIOSK_PACKAGES
+            val unknown = keys - FLAG_KEYS.toSet() - LIST_KEYS.toSet() - KEY_APP_MODE
             if (unknown.isNotEmpty()) throw InvalidPolicy("Unknown policy keys: $unknown")
 
             fun flag(key: String): Boolean {
@@ -93,13 +109,25 @@ data class Policy(
                 return value
             }
 
-            val packages = mutableSetOf<String>()
-            json.optJSONArray(KEY_KIOSK_PACKAGES)?.let { array ->
-                for (i in 0 until array.length()) {
-                    val name = array.optString(i, "")
-                    if (name.isEmpty()) throw InvalidPolicy("kiosk_packages entries must be package names")
-                    if (name != selfPackage) packages.add(name)
+            fun packages(key: String): List<String> {
+                val out = mutableSetOf<String>()
+                json.optJSONArray(key)?.let { array ->
+                    for (i in 0 until array.length()) {
+                        val name = array.optString(i, "")
+                        if (name.isEmpty()) throw InvalidPolicy("$key entries must be package names")
+                        if (name != selfPackage) out.add(name)
+                    }
                 }
+                return out.sorted()
+            }
+            val packages = packages(KEY_KIOSK_PACKAGES)
+            val mode = json.optString(KEY_APP_MODE, APP_MODE_OPEN)
+            if (mode !in APP_MODES) throw InvalidPolicy("$KEY_APP_MODE must be one of $APP_MODES")
+            // The kiosk target must stay openable whichever mode is active.
+            val allowed = if (mode == APP_MODE_ALLOWLIST) {
+                (packages(KEY_ALLOWED_PACKAGES) + packages).toSortedSet().toList()
+            } else {
+                packages(KEY_ALLOWED_PACKAGES)
             }
             val policy = Policy(
                 kioskMode = flag(KEY_KIOSK_MODE),
@@ -115,10 +143,17 @@ data class Policy(
                 autoOsUpdates = flag(KEY_AUTO_OS_UPDATES),
                 stayAwakeOnPower = flag(KEY_STAY_AWAKE_ON_POWER),
                 wifiAlwaysOn = flag(KEY_WIFI_ALWAYS_ON),
-                kioskPackages = packages.sorted(),
+                accountsLocked = flag(KEY_ACCOUNTS_LOCKED),
+                addUserBlocked = flag(KEY_ADD_USER_BLOCKED),
+                kioskPackages = packages,
+                appMode = mode,
+                allowedPackages = allowed,
             )
             if (policy.kioskMode && policy.kioskPackages.isEmpty()) {
                 throw UnsafePolicy("kiosk_mode requires at least one package in kiosk_packages")
+            }
+            if (policy.appMode == APP_MODE_ALLOWLIST && policy.allowedPackages.isEmpty()) {
+                throw UnsafePolicy("app_mode allowlist requires at least one package in allowed_packages")
             }
             return policy
         }
