@@ -63,6 +63,11 @@ class PolicyStore(context: Context) {
         get() = prefs.getStringSet(KEY_UNSUSPENDABLE, emptySet())?.sorted() ?: emptyList()
         set(value) = prefs.edit().putStringSet(KEY_UNSUSPENDABLE, value.toSet()).apply()
 
+    /** Packages installed while the allowlist was on and not yet added to it. */
+    var pendingPackages: List<String>
+        get() = prefs.getStringSet(KEY_PENDING, emptySet())?.sorted() ?: emptyList()
+        set(value) = prefs.edit().putStringSet(KEY_PENDING, value.toSet()).apply()
+
     /** Outcome of the last install_package action, reported until the next one. */
     var lastInstall: JSONObject?
         get() = prefs.getString(KEY_LAST_INSTALL, null)?.let { runCatching { JSONObject(it) }.getOrNull() }
@@ -72,6 +77,7 @@ class PolicyStore(context: Context) {
         private const val KEY_LAST_INSTALL = "last_install"
         private const val KEY_SUSPENDED = "suspended_packages"
         private const val KEY_UNSUSPENDABLE = "unsuspendable_packages"
+        private const val KEY_PENDING = "pending_packages"
         private const val KEY_DEVICE_ID = "device_id"
         private const val KEY_TOKEN = "token"
         private const val KEY_WEBHOOK = "webhook_url"

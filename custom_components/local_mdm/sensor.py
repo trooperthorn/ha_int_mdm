@@ -107,6 +107,11 @@ SENSORS: tuple[LocalMdmSensorDescription, ...] = (
         value_fn=lambda s: len(s.tier_limited),
     ),
     LocalMdmSensorDescription(
+        key="pending_packages",
+        translation_key="pending_packages",
+        value_fn=lambda s: len(s.pending_packages),
+    ),
+    LocalMdmSensorDescription(
         key="last_install",
         translation_key="last_install",
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -151,4 +156,6 @@ class LocalMdmSensor(LocalMdmEntity, SensorEntity):
                 return {"installed": status.installed}
             case "last_install":
                 return dict(status.last_install or {})
+            case "pending_packages":
+                return {"packages": status.pending_packages, "unsuspendable": status.unsuspendable}
         return None

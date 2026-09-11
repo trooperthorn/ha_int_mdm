@@ -74,6 +74,9 @@ class DeviceStatus:
     update_received_at: str | None = None
     installed: dict[str, str | None] = field(default_factory=dict)
     last_install: dict[str, Any] | None = None
+    wifi_mac: str | None = None
+    pending_packages: list[str] = field(default_factory=list)
+    unsuspendable: list[str] = field(default_factory=list)
     raw: dict[str, Any] = field(default_factory=dict, compare=False, repr=False)
 
     @property
@@ -129,10 +132,29 @@ class DeviceStatus:
                 update_received_at=_opt_str(update.get("received_at")),
                 installed=installed,
                 last_install=dict(last_install) if isinstance(last_install, dict) else None,
+                wifi_mac=_opt_mac(network.get("mac")),
+                pending_packages=_str_list(payload.get("pending_packages")),
+                unsuspendable=_str_list(payload.get("unsuspendable")),
                 raw=payload,
             )
         except (KeyError, TypeError, ValueError, AttributeError) as err:
             raise ValueError(f"Malformed DPC status payload: {err}") from err
+
+
+def _opt_mac(value: Any) -> str | None:
+    """Lower-case colon MAC, or None for the Android placeholder and junk."""
+    if not isinstance(value, str):
+        return None
+    mac = value.strip().lower()
+    if len(mac) != 17 or mac == "02:00:00:00:00:00":
+        return None
+    return mac
+
+
+def _str_list(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return sorted({str(v) for v in value if isinstance(v, str) and v})
 
 
 def _opt_int(value: Any) -> int | None:

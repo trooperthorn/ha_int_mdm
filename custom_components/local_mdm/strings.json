@@ -187,6 +187,9 @@
       },
       "wifi_ssid": {
         "name": "Wi-Fi network"
+      },
+      "pending_packages": {
+        "name": "Apps awaiting approval"
       }
     },
     "button": {
@@ -267,6 +270,20 @@
         "policy": {
           "name": "Policy",
           "description": "The policy document: the switch keys, kiosk_packages, app_mode and allowed_packages."
+        }
+      }
+    },
+    "approve_package": {
+      "name": "Approve package",
+      "description": "Approve an app that was installed while the allowlist was on. It is added to the allowed packages and unsuspended.",
+      "fields": {
+        "device_id": {
+          "name": "Tablet",
+          "description": "The Local MDM tablet holding the app."
+        },
+        "package": {
+          "name": "Package",
+          "description": "Android package name, from the Apps awaiting approval sensor."
         }
       }
     }

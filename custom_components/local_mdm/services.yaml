@@ -49,3 +49,15 @@ apply_policy:
       example: '{"app_mode": "allowlist", "allowed_packages": ["io.homeassistant.companion.android"], "accounts_locked": true}'
       selector:
         object:
+approve_package:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: local_mdm
+    package:
+      required: true
+      example: "com.google.android.youtube"
+      selector:
+        text:
