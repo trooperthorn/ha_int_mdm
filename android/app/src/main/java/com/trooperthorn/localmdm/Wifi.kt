@@ -89,6 +89,29 @@ class Wifi(private val context: Context) {
      * some of the time even with location granted and on, so the last good
      * value is kept while Wi-Fi stays connected and dropped when it is not.
      */
+    /**
+     * MAC address in use on the current connection, the one the access point
+     * and the UniFi controller see (randomised per network on Android 10+).
+     * Only a Device Owner gets the real value; anyone else gets the
+     * 02:00:00:00:00:00 placeholder, which is dropped.
+     */
+    @Suppress("DEPRECATION")
+    fun macInUse(): String? {
+        // Android 16 (Pixel Tablet, 2026-09-11) returned the placeholder on
+        // both paths even for a Device Owner, so this is usually null there;
+        // kept because earlier releases honour the owner exemption.
+        val fromTransport = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            runCatching {
+                val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+                (cm.getNetworkCapabilities(cm.activeNetwork)?.transportInfo as? android.net.wifi.WifiInfo)?.macAddress
+            }.getOrNull()
+        } else null
+        val fromLegacy = runCatching { wifi.connectionInfo?.macAddress }.getOrNull()
+        return listOfNotNull(fromTransport, fromLegacy)
+            .firstOrNull { it.isNotEmpty() && it != PLACEHOLDER_MAC }
+            ?.lowercase()
+    }
+
     fun connectedSsid(): String? {
         if (!Network.isWifiConnected(context)) {
             lastSsid = null
@@ -102,6 +125,7 @@ class Wifi(private val context: Context) {
     }
 
     companion object {
+        private const val PLACEHOLDER_MAC = "02:00:00:00:00:00"
         private const val TAG = "LocalMdm.Wifi"
     }
 }

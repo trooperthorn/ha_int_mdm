@@ -18,6 +18,7 @@ class MdmService : Service() {
     private lateinit var reporter: WebhookReporter
     private var server: HttpServer? = null
     private var homeWatch: HomeWatch? = null
+    private var packageWatch: PackageWatch? = null
     private val handler = Handler(Looper.getMainLooper())
     private val heartbeat = object : Runnable {
         override fun run() {
@@ -37,6 +38,7 @@ class MdmService : Service() {
         if (engine.isDeviceOwner) engine.wifiControl.grantLocationToSelf()
         if (engine.tier != PolicyEngine.TIER_NONE) engine.apply(store.policy, store.policyVersion)
         if (engine.tier == PolicyEngine.TIER_ADMIN) homeWatch = HomeWatch(this, store).also { it.start() }
+        if (engine.isDeviceOwner) packageWatch = PackageWatch(this, engine) { reporter.report() }.also { it.start() }
         val installer = Installer(this, store) { reporter.report() }
         server = HttpServer(PORT, store, engine, { reporter.report() }, installer).also {
             try {
@@ -60,6 +62,7 @@ class MdmService : Service() {
     override fun onDestroy() {
         handler.removeCallbacks(heartbeat)
         homeWatch?.stop()
+        packageWatch?.stop()
         server?.stop()
         super.onDestroy()
     }

@@ -41,6 +41,8 @@ non-JSON, 422 when the report's `device_id` is not the entry's tablet.
   "enforcement": { "kiosk_mode": "applied", "camera_disabled": "applied", "...": "applied" },
   "lock_task_active": false,
   "unsuspendable": [],
+  "pending_packages": [],
+  "network": { "wifi_connected": true, "wifi_enabled": true, "ssid": "IoT-Tablets", "mac": null, "mac_factory": "a4:..." },
   "battery": { "level": 87, "charging": true },
   "network": { "wifi_connected": true, "wifi_enabled": true, "ssid": "IoT-Tablets" },
   "os": { "release": "15", "sdk": 35, "security_patch": "2024-09-05", "build": "...", "model": "...", "manufacturer": "..." },
@@ -93,6 +95,28 @@ derives it from `is_device_owner`.
 | `add_user_blocked` | `DISALLOW_ADD_USER` | No second user or supervised profile can be created |
 | `app_mode` | `open`: lift every suspension this DPC placed. `allowlist`: `setPackagesSuspended` on every launchable package not in `allowed_packages` | Never suspended: the DPC, `com.android.shell`, Settings, the system UI, the Play Store (installer of record, Android refuses; use `install_apps_blocked`), any HOME launcher, the kiosk target. The stock launcher, notifications and Hub Mode keep working; a suspended app greys out. A package the platform still refuses is listed in `unsuspendable` and the key reports `limited` |
 | `allowed_packages` | list of package names that stay openable in `allowlist` mode | The DPC is removed by the guard; `kiosk_packages` are folded in on both sides so the kiosk target is never suspended. An empty list with `allowlist` is refused as unsafe |
+
+### Post-install approval
+
+Under `app_mode: allowlist` the DPC registers for `PACKAGE_ADDED`. A fresh
+install (Play, sideload, or `install_package`) that is launchable and not on
+the list is suspended at once and added to `pending_packages` in the status.
+Home Assistant shows it in the "Apps awaiting approval" sensor; the
+`local_mdm.approve_package` action adds it to `allowed_packages` and pushes,
+which unsuspends it. An uninstall or leaving `allowlist` clears the entry.
+There is no pre-install gate: that exists only in managed Google Play, which
+needs an enterprise enrolment and is out of scope for a local-only design.
+
+### Device linking
+
+`network.mac` is the MAC in use on the current connection when Android gives
+it to a Device Owner (Android 16 returns the placeholder on every path, so it
+is usually null); `network.mac_factory` is the permanent one from
+`getWifiMacAddress`, which the access point sees only when the network is set
+to "Use device MAC" on the tablet. Home Assistant registers the in-use MAC as
+the device's network connection, falling back to the UniFi Network tracker
+whose `ip` attribute equals the tablet's host, so the Local MDM device and the
+UniFi client become one device page.
 
 ## Keys refused on both sides
 

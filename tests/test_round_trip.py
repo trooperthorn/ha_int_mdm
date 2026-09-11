@@ -219,6 +219,84 @@ async def test_apply_policy_action(hass, setup_entry, fake_client: FakeClient):
         )
 
 
+async def test_pending_packages_and_approval(
+    hass, setup_entry, fake_client: FakeClient, hass_client_no_auth
+):
+    """A held package shows in the sensor; approve_package adds it to the allowlist."""
+    from homeassistant.helpers import device_registry as dr
+
+    # Make the allowlist the desired policy first, or the drift re-push would
+    # replace the held report with a fresh one.
+    await hass.services.async_call(
+        "text",
+        "set_value",
+        {"entity_id": "text.tablet_tablet_kitchen_allowed_packages", "value": "a.app"},
+        blocking=True,
+    )
+    await hass.services.async_call(
+        "select",
+        "select_option",
+        {"entity_id": "select.tablet_tablet_kitchen_app_mode", "option": "allowlist"},
+        blocking=True,
+    )
+    held = status_payload(
+        policy={
+            **status_payload()["policy"],
+            "app_mode": "allowlist",
+            "allowed_packages": ["a.app"],
+        },
+        pending_packages=["new.app"],
+        network={
+            "wifi_connected": True,
+            "wifi_enabled": True,
+            "ssid": "IoT",
+            "mac": "AA:BB:CC:DD:EE:01",
+        },
+    )
+    await _post_webhook(hass, hass_client_no_auth, held)
+    sensor = hass.states.get("sensor.tablet_tablet_kitchen_apps_awaiting_approval")
+    assert sensor.state == "1"
+    assert sensor.attributes["packages"] == ["new.app"]
+    registry = dr.async_get(hass)
+    device = registry.async_get_device_by_identifier(("local_mdm", DEVICE_ID), setup_entry.entry_id)
+    assert ("mac", "aa:bb:cc:dd:ee:01") in device.connections
+    await hass.services.async_call(
+        "local_mdm",
+        "approve_package",
+        {"device_id": device.id, "package": "new.app"},
+        blocking=True,
+    )
+    pushed = fake_client.policy_calls[-1][0]
+    assert "new.app" in pushed["allowed_packages"]
+    with pytest.raises(vol.Invalid):
+        await hass.services.async_call(
+            "local_mdm",
+            "approve_package",
+            {"device_id": device.id, "package": "not a package"},
+            blocking=True,
+        )
+
+
+async def test_mac_from_unifi_tracker_links_device(
+    hass, setup_entry, fake_client: FakeClient, hass_client_no_auth
+):
+    """Without a DPC-reported MAC the UniFi tracker with the tablet's IP supplies it."""
+    from homeassistant.const import CONF_HOST
+    from homeassistant.helpers import device_registry as dr, entity_registry as er
+
+    entry = er.async_get(hass).async_get_or_create("device_tracker", "unifi", "client-1")
+    hass.states.async_set(
+        entry.entity_id,
+        "home",
+        {"ip": setup_entry.data[CONF_HOST], "mac": "02:9E:10:35:DE:56", "source_type": "router"},
+    )
+    await _post_webhook(hass, hass_client_no_auth, status_payload())
+    device = dr.async_get(hass).async_get_device_by_identifier(
+        ("local_mdm", DEVICE_ID), setup_entry.entry_id
+    )
+    assert ("mac", "02:9e:10:35:de:56") in device.connections
+
+
 async def test_os_and_app_version_entities(
     hass, setup_entry, fake_client: FakeClient, hass_client_no_auth
 ):

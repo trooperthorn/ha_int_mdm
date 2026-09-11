@@ -109,6 +109,30 @@ class PolicyEngine(private val context: Context, private val store: PolicyStore)
     }
 
     /**
+     * A package was just installed. Under the allowlist it is suspended at
+     * once and listed as pending so Home Assistant can offer approval; any
+     * other mode ignores it. Called by PackageWatch.
+     */
+    fun onPackageAdded(pkg: String) {
+        val policy = store.policy
+        if (tier != TIER_OWNER || policy.appMode != Policy.APP_MODE_ALLOWLIST) return
+        if (pkg in policy.allowedPackages || pkg == context.packageName) return
+        val launcher = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setPackage(pkg)
+        if (context.packageManager.queryIntentActivities(launcher, 0).isEmpty()) return
+        store.pendingPackages = (store.pendingPackages + pkg).toSortedSet().toList()
+        val result = LinkedHashMap(store.enforcement)
+        result[Policy.KEY_APP_MODE] = applyAppMode(policy)
+        store.enforcement = result
+        Log.i(TAG, "New package $pkg held for approval")
+    }
+
+    /** A package is gone: nothing to approve or lift any more. */
+    fun onPackageRemoved(pkg: String) {
+        store.pendingPackages = store.pendingPackages - pkg
+        store.suspendedPackages = store.suspendedPackages - pkg
+    }
+
+    /**
      * allowlist: suspend every launchable package that is not allowed, so the
      * stock launcher, notifications and Hub Mode keep working while only the
      * listed apps open (a suspended app greys out and shows the system
@@ -149,6 +173,13 @@ class PolicyEngine(private val context: Context, private val store: PolicyStore)
         }
         store.suspendedPackages = (wanted - stuck.toSet()).toList()
         store.unsuspendable = stuck.sorted()
+        // Approval is adding the package to allowed_packages; an uninstall or
+        // leaving allowlist mode also clears it.
+        store.pendingPackages = if (policy.appMode == Policy.APP_MODE_ALLOWLIST) {
+            store.pendingPackages.filter { it in wanted }
+        } else {
+            emptyList()
+        }
         if (outcome != "applied") return outcome
         if (stuck.isEmpty()) return "applied"
         Log.w(TAG, "Platform refused to change suspension of ${stuck.joinToString()}")
@@ -303,13 +334,18 @@ class PolicyEngine(private val context: Context, private val store: PolicyStore)
             put("enforcement", JSONObject(store.enforcement))
             put("lock_task_active", isLockTaskActive())
             put("unsuspendable", org.json.JSONArray(store.unsuspendable))
+            put("pending_packages", org.json.JSONArray(store.pendingPackages))
             put("battery", JSONObject().put("level", level).put("charging", charging))
             put(
                 "network",
                 JSONObject()
                     .put("wifi_connected", Network.isWifiConnected(context))
                     .put("wifi_enabled", wifiControl.isEnabled())
-                    .put("ssid", wifiControl.connectedSsid() ?: JSONObject.NULL),
+                    .put("ssid", wifiControl.connectedSsid() ?: JSONObject.NULL)
+                    .put("mac", wifiControl.macInUse() ?: JSONObject.NULL)
+                    // Factory MAC: what the access point sees only when the
+                    // network is set to "Use device MAC" on the tablet.
+                    .put("mac_factory", factoryMac() ?: JSONObject.NULL),
             )
             put("os", osInfo())
             put("system_update", systemUpdateInfo())
@@ -318,6 +354,9 @@ class PolicyEngine(private val context: Context, private val store: PolicyStore)
             put("reported_at", Instant.now().toString())
         }
     }
+
+    private fun factoryMac(): String? =
+        if (!isDeviceOwner) null else runCatching { dpm.getWifiMacAddress(admin) }.getOrNull()?.lowercase()
 
     private fun osInfo(): JSONObject = JSONObject()
         .put("release", Build.VERSION.RELEASE)

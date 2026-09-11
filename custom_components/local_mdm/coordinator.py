@@ -9,8 +9,10 @@ from datetime import timedelta
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
+from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import (
@@ -20,7 +22,7 @@ from .api import (
     LocalMdmConnectionError,
     LocalMdmPolicyRefusedError,
 )
-from .const import DOMAIN, POLICY_KIOSK_PACKAGES
+from .const import DOMAIN, POLICY_ALLOWED_PACKAGES, POLICY_KIOSK_PACKAGES
 from .policy import InvalidPolicyError, UnsafePolicyError, default_policy, validate_policy
 
 _LOGGER = logging.getLogger(__name__)
@@ -28,6 +30,8 @@ _LOGGER = logging.getLogger(__name__)
 # A report that disagrees with the desired policy triggers one re-push, at
 # most this often, so a tablet that keeps refusing cannot be hammered.
 RECONCILE_MIN_INTERVAL = 30.0
+# The UniFi Network integration; its client trackers carry ip and mac attributes.
+UNIFI_DOMAIN = "unifi"
 
 type LocalMdmConfigEntry = ConfigEntry[LocalMdmCoordinator]
 
@@ -56,6 +60,7 @@ class LocalMdmCoordinator(DataUpdateCoordinator[DeviceStatus]):
         self._policy_version = 0
         self._push_lock = asyncio.Lock()
         self._last_reconcile: float | None = None
+        self._known_mac: str | None = None
 
     async def _async_setup(self) -> None:
         # The tablet's applied policy is the source of truth after a restart;
@@ -73,7 +78,46 @@ class LocalMdmCoordinator(DataUpdateCoordinator[DeviceStatus]):
     async def _async_update_data(self) -> DeviceStatus:
         status = await self._fetch()
         self._reconcile_if_drifted(status)
+        self._sync_mac(status)
         return status
+
+    def _sync_mac(self, status: DeviceStatus) -> None:
+        """Register the tablet's Wi-Fi MAC as a device connection.
+
+        With a MAC connection the device merges with the same tablet in any
+        integration keyed by MAC, the UniFi Network client above all. The DPC
+        reports the MAC in use only where Android still honours the Device
+        Owner exemption (Android 16 does not), so the fallback is the UniFi
+        tracker whose IP is this tablet's host: it carries the randomised MAC
+        the access point actually sees.
+        """
+        mac = status.wifi_mac or self._mac_from_unifi()
+        if not mac or mac == self._known_mac:
+            return
+        registry = dr.async_get(self.hass)
+        device = registry.async_get_device(identifiers={(DOMAIN, status.device_id)})
+        if device is None:
+            return
+        registry.async_update_device(
+            device.id, merge_connections={(dr.CONNECTION_NETWORK_MAC, mac)}
+        )
+        self._known_mac = mac
+
+    def _mac_from_unifi(self) -> str | None:
+        host = self.config_entry.data.get(CONF_HOST)
+        if not host:
+            return None
+        ent_reg = er.async_get(self.hass)
+        for state in self.hass.states.async_all("device_tracker"):
+            if state.attributes.get("ip") != host:
+                continue
+            entry = ent_reg.async_get(state.entity_id)
+            if entry is None or entry.platform != UNIFI_DOMAIN:
+                continue
+            mac = state.attributes.get("mac")
+            if isinstance(mac, str) and len(mac) == 17:
+                return mac.lower()
+        return None
 
     def _reconcile_if_drifted(self, status: DeviceStatus) -> None:
         """Re-push the desired policy when the tablet reports a different one.
@@ -131,6 +175,7 @@ class LocalMdmCoordinator(DataUpdateCoordinator[DeviceStatus]):
         self._policy_version = max(self._policy_version, status.policy_version)
         self.async_set_updated_data(status)
         self._reconcile_if_drifted(status)
+        self._sync_mac(status)
         return True
 
     async def async_set_policy_flag(self, key: str, value: bool) -> None:
@@ -140,6 +185,13 @@ class LocalMdmCoordinator(DataUpdateCoordinator[DeviceStatus]):
     async def async_set_kiosk_packages(self, packages: list[str]) -> None:
         """Replace the kiosk package list and push."""
         await self.async_apply_policy({**self.desired_policy, POLICY_KIOSK_PACKAGES: packages})
+
+    async def async_approve_package(self, package: str) -> None:
+        """Approve a package held by the allowlist: add it and push."""
+        current = list(self.desired_policy.get(POLICY_ALLOWED_PACKAGES, []))
+        if package not in current:
+            current.append(package)
+        await self.async_set_policy_value(POLICY_ALLOWED_PACKAGES, current)
 
     async def async_set_policy_value(self, key: str, value: Any) -> None:
         """Change one non-flag value (app mode, allowed packages) and push."""

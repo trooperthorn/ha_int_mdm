@@ -200,3 +200,13 @@ Paired through the config flow; `management_tier` owner.
 - Before the first policy push a fresh entry shows one enforcement failure
   and eleven tier-limited keys from the empty enforcement map; both clear on
   the first push (cosmetic, in the backlog).
+- Post-install approval (same day): with the allowlist on, `adb install` of
+  a launchable APK produced "New package ... held for approval" in the log,
+  `suspended=true` and the package in `pending_packages` within 4 s. Adding it
+  to `allowed_packages` unsuspended it and emptied the list; `adb uninstall`
+  emptied the list too.
+- MAC: `WifiInfo.getMacAddress` returned 02:00:00:00:00:00 on both the legacy
+  and the transport-info path for the Device Owner on Android 16;
+  `getWifiMacAddress` (factory) works. The UniFi tracker for the same IP
+  carries the randomised MAC in use (02:9e:10:35:de:56), which is what the
+  integration now links on.

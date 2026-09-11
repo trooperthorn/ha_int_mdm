@@ -88,9 +88,29 @@ async def _apply_policy(call: ServiceCall) -> None:
     await coordinator.async_apply_policy(dict(call.data[ATTR_POLICY]))
 
 
+SERVICE_APPROVE_PACKAGE = "approve_package"
+ATTR_PACKAGE = "package"
+
+APPROVE_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_DEVICE_ID): cv.string,
+        vol.Required(ATTR_PACKAGE): vol.All(
+            cv.string, vol.Match(r"^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$")
+        ),
+    }
+)
+
+
+async def _approve_package(call: ServiceCall) -> None:
+    """Post-install approval: add a held package to allowed_packages."""
+    coordinator = _coordinator_for_device(call.hass, call.data[ATTR_DEVICE_ID])
+    await coordinator.async_approve_package(call.data[ATTR_PACKAGE])
+
+
 @callback
 def async_setup_services(hass: HomeAssistant) -> None:
     """Register the integration's actions once."""
     hass.services.async_register(DOMAIN, SERVICE_INSTALL_PACKAGE, _install_package, INSTALL_SCHEMA)
     hass.services.async_register(DOMAIN, SERVICE_CONFIGURE_WIFI, _configure_wifi, WIFI_SCHEMA)
     hass.services.async_register(DOMAIN, SERVICE_APPLY_POLICY, _apply_policy, APPLY_SCHEMA)
+    hass.services.async_register(DOMAIN, SERVICE_APPROVE_PACKAGE, _approve_package, APPROVE_SCHEMA)
