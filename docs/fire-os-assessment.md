@@ -24,11 +24,12 @@ Everything that normally clears a profile owner was tried:
 | Factory reset from Settings, then registration | profile owner and 8 Amazon accounts back, plus a child profile (user 10) |
 | `pm remove-user 10`, then Deregister in Settings > My Account | user 10 gone, accounts down to 5 `amazon.account` entries, profile owner still present |
 
+| Factory reset, Wi-Fi and registration skipped (never registered) | profile owner already present on first boot, 3 `amazon.account` entries; `pm disable-user` and `pm clear` refuse: "Cannot disable a protected package" |
+
 Amazon ships Parental Controls as the profile owner of the primary user on
-Fire OS 7 and Android will not accept a Device Owner alongside it. Whether
-a wipe followed by skipping Wi-Fi and registration boots without the
-profile owner is untested; the deregistered state suggests it is set by
-the system image, not by registration.
+Fire OS 7, set by the system image before any registration, marked as a
+protected package, and Android will not accept a Device Owner alongside it.
+Without root or a custom ROM there is no path. Closed 2026-09-11.
 
 ## Options for the four Fire tablets
 
@@ -49,6 +50,6 @@ and the honesty table in `docs/console-lockout.md` is extended for it.
 
 ## State left on the tablet
 
-Deregistered from Amazon, child profile removed, Local MDM debug APK
-installed (not owner). Re-register in Settings > My Account to return it to
-normal use.
+Factory reset, unregistered, ADB enabled, Local MDM debug APK installed (not
+owner). Register in Settings > My Account to return it to normal use, or
+leave it as a plain Companion tablet.
