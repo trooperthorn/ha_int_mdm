@@ -16,4 +16,6 @@ carries only what a reader needs at the point of reading; explanation lives here
 - `console-lockout.md`: the wall tablet recipe (Companion as the single app, automatic OS
   updates, stay awake) and how Device Owner changes the honesty table of a Companion-only
   design.
+- `knox-sdk-assessment.md`: what the Samsung Knox SDK would add over the Device Owner
+  APIs, its license and cloud dependencies, and why it is not used in this phase.
 - `live_qualification.md`: the hardware checks that the mocked suite cannot replace.
