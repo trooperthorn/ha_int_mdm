@@ -95,6 +95,18 @@ SENSORS: tuple[LocalMdmSensorDescription, ...] = (
         value_fn=lambda s: s.wifi_ssid,
     ),
     LocalMdmSensorDescription(
+        key="management_tier",
+        translation_key="management_tier",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda s: s.tier,
+    ),
+    LocalMdmSensorDescription(
+        key="tier_limited",
+        translation_key="tier_limited",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda s: len(s.tier_limited),
+    ),
+    LocalMdmSensorDescription(
         key="last_install",
         translation_key="last_install",
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -128,6 +140,11 @@ class LocalMdmSensor(LocalMdmEntity, SensorEntity):
         match self.entity_description.key:
             case "enforcement_failures":
                 return {"keys": status.enforcement_failures}
+            case "tier_limited":
+                return {
+                    "keys": status.tier_limited,
+                    "detail": {k: status.enforcement[k] for k in status.tier_limited},
+                }
             case "os_version":
                 return {"build": status.os_build, "update_received_at": status.update_received_at}
             case "kiosk_app_version":

@@ -56,8 +56,8 @@ class HttpServer(
         } catch (err: Policy.Companion.InvalidPolicy) {
             return text(Response.Status.BAD_REQUEST, err.message ?: "invalid policy")
         }
-        if (!engine.isDeviceOwner) {
-            return text(UNPROCESSABLE_ENTITY, "not device owner")
+        if (engine.tier == PolicyEngine.TIER_NONE) {
+            return text(UNPROCESSABLE_ENTITY, "not device owner or device admin")
         }
         engine.apply(policy, version)
         onReport()

@@ -12,7 +12,14 @@ from typing import Any
 
 import aiohttp
 
-from .const import ENFORCEMENT_APPLIED, REQUEST_TIMEOUT
+from .const import (
+    ENFORCEMENT_APPLIED,
+    REQUEST_TIMEOUT,
+    TIER_ADMIN,
+    TIER_LIMITS,
+    TIER_NONE,
+    TIER_OWNER,
+)
 from .policy import validate_policy
 
 API_VERSION = "v1"
@@ -34,6 +41,14 @@ class LocalMdmPolicyRefusedError(LocalMdmError):
     """The DPC refused a policy, for example a kiosk with no packages."""
 
 
+def _tier(payload: dict[str, Any]) -> str:
+    """Tier from the payload; older DPCs only send is_device_owner."""
+    tier = payload.get("tier")
+    if tier in (TIER_OWNER, TIER_ADMIN, TIER_NONE):
+        return str(tier)
+    return TIER_OWNER if payload.get("is_device_owner") else TIER_NONE
+
+
 @dataclass(frozen=True)
 class DeviceStatus:
     """Snapshot of the tablet as reported by the DPC."""
@@ -45,6 +60,7 @@ class DeviceStatus:
     policy: dict[str, Any]
     enforcement: dict[str, str]
     lock_task_active: bool
+    tier: str = TIER_NONE
     battery_level: int | None = None
     battery_charging: bool | None = None
     wifi_connected: bool | None = None
@@ -63,7 +79,16 @@ class DeviceStatus:
     @property
     def enforcement_failures(self) -> list[str]:
         """Policy keys the DPC reported as anything other than applied."""
-        return sorted(k for k, v in self.enforcement.items() if v != ENFORCEMENT_APPLIED)
+        return sorted(
+            k
+            for k, v in self.enforcement.items()
+            if v != ENFORCEMENT_APPLIED and v not in TIER_LIMITS
+        )
+
+    @property
+    def tier_limited(self) -> list[str]:
+        """Policy keys the tier cannot fully enforce (limited or unsupported)."""
+        return sorted(k for k, v in self.enforcement.items() if v in TIER_LIMITS)
 
     def is_enforced(self, key: str) -> bool:
         """True when the DPC reports ``key`` on and applied."""
@@ -87,6 +112,7 @@ class DeviceStatus:
                 dpc_version=str(payload.get("dpc_version", "unknown")),
                 is_device_owner=bool(payload.get("is_device_owner", False)),
                 policy_version=int(payload.get("policy_version", 0)),
+                tier=_tier(payload),
                 policy=policy,
                 enforcement=enforcement,
                 lock_task_active=bool(payload.get("lock_task_active", False)),

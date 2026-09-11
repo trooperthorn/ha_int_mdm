@@ -167,6 +167,12 @@
       "last_install": {
         "name": "Last install"
       },
+      "management_tier": {
+        "name": "Management tier"
+      },
+      "tier_limited": {
+        "name": "Policies limited by tier"
+      },
       "wifi_ssid": {
         "name": "Wi-Fi network"
       }

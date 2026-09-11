@@ -11,6 +11,7 @@ import android.content.pm.PackageManager
 import android.os.BatteryManager
 import android.os.Build
 import android.provider.Settings
+import android.content.pm.PackageManager as PM
 import android.os.UserManager
 import android.util.Log
 import java.time.Instant
@@ -28,16 +29,35 @@ class PolicyEngine(private val context: Context, private val store: PolicyStore)
     val wifiControl = Wifi(context)
 
     val isDeviceOwner: Boolean get() = dpm.isDeviceOwnerApp(context.packageName)
+    val isDeviceAdmin: Boolean get() = dpm.isAdminActive(admin)
+
+    /**
+     * owner: full Device Owner. admin: active device admin only (the "lite"
+     * tier for tablets that cannot take an owner, such as Fire OS); a reduced
+     * set of keys is enforced and the rest report `unsupported`. none: nothing
+     * is enforced and every key reports `refused`.
+     */
+    val tier: String get() = when {
+        isDeviceOwner -> TIER_OWNER
+        isDeviceAdmin -> TIER_ADMIN
+        else -> TIER_NONE
+    }
+
+    private val canWriteSecureSettings: Boolean
+        get() = context.checkSelfPermission(android.Manifest.permission.WRITE_SECURE_SETTINGS) == PM.PERMISSION_GRANTED
 
     fun apply(policy: Policy, version: Int): Map<String, String> {
         // Persist first: a reboot or crash in the middle of enforcement must
         // not leave the previous policy on disk for BootReceiver to restore.
         store.policy = policy
         store.policyVersion = version
-        if (!isDeviceOwner) {
-            val refused = Policy.FLAG_KEYS.associateWith { "refused" }
-            store.enforcement = refused
-            return refused
+        when (tier) {
+            TIER_NONE -> {
+                val refused = Policy.FLAG_KEYS.associateWith { "refused" }
+                store.enforcement = refused
+                return refused
+            }
+            TIER_ADMIN -> return applyLite(policy)
         }
         val result = LinkedHashMap<String, String>()
 
@@ -81,6 +101,59 @@ class PolicyEngine(private val context: Context, private val store: PolicyStore)
 
         store.enforcement = result
         return result
+    }
+
+    /**
+     * Lite tier. Honest ceiling per key on a plain device admin:
+     * camera and lockNow are admin policies; stay-awake needs the adb-granted
+     * WRITE_SECURE_SETTINGS; Wi-Fi on works below Android 10; kiosk is the
+     * HomeWatch foreground poll (usage access) plus screen pinning, reported
+     * as `limited` because the user can still unpin. Everything else has no
+     * non-owner API and reports `unsupported`, which Home Assistant shows as a
+     * tier limit, not an enforcement failure.
+     */
+    private fun applyLite(policy: Policy): Map<String, String> {
+        val result = LinkedHashMap<String, String>()
+        for (key in Policy.FLAG_KEYS) result[key] = UNSUPPORTED
+        result[Policy.KEY_CAMERA_DISABLED] = attempt { dpm.setCameraDisabled(admin, policy.cameraDisabled) }
+        result[Policy.KEY_STAY_AWAKE_ON_POWER] = if (!canWriteSecureSettings) UNSUPPORTED else attempt {
+            Settings.Global.putString(
+                context.contentResolver,
+                Settings.Global.STAY_ON_WHILE_PLUGGED_IN,
+                if (policy.stayAwakeOnPower) "7" else "0",
+            )
+        }
+        result[Policy.KEY_WIFI_ALWAYS_ON] = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) UNSUPPORTED else attempt {
+            if (policy.wifiAlwaysOn && !wifiControl.ensureEnabled()) {
+                throw IllegalStateException("setWifiEnabled refused")
+            }
+        }
+        result[Policy.KEY_KIOSK_MODE] = applyLiteKiosk(policy)
+        store.enforcement = result
+        return result
+    }
+
+    private fun applyLiteKiosk(policy: Policy): String {
+        val watcher = HomeWatch(context, store)
+        if (canWriteSecureSettings) {
+            runCatching { Settings.Secure.putString(context.contentResolver, "lock_to_app_enabled", "1") }
+        }
+        val launched = attempt {
+            context.startActivity(
+                Intent(context, KioskActivity::class.java)
+                    .apply {
+                        if (policy.kioskMode) putExtra(KioskActivity.EXTRA_TARGET, policy.kioskPackages.first())
+                        else putExtra(KioskActivity.EXTRA_STOP, true)
+                    }
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
+        }
+        return when {
+            launched != "applied" -> launched
+            !policy.kioskMode -> "applied"
+            watcher.granted -> LIMITED
+            else -> "failed" // no usage access: nothing brings the launcher back
+        }
     }
 
     private fun applyKiosk(policy: Policy) {
@@ -171,6 +244,7 @@ class PolicyEngine(private val context: Context, private val store: PolicyStore)
             put("device_id", store.deviceId)
             put("dpc_version", BuildConfig.VERSION_NAME)
             put("is_device_owner", isDeviceOwner)
+            put("tier", tier)
             put("policy_version", store.policyVersion)
             put("policy", store.policy.toJson())
             put("enforcement", JSONObject(store.enforcement))
@@ -228,5 +302,10 @@ class PolicyEngine(private val context: Context, private val store: PolicyStore)
     companion object {
         private const val TAG = "LocalMdm.Policy"
         private const val ADB_SHELL_PACKAGE = "com.android.shell"
+        const val TIER_OWNER = "owner"
+        const val TIER_ADMIN = "admin"
+        const val TIER_NONE = "none"
+        const val LIMITED = "limited"
+        const val UNSUPPORTED = "unsupported"
     }
 }

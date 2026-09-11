@@ -140,3 +140,26 @@ Debug build installed over adb; kiosk switch cycled off/on from Home Assistant. 
 ## Reboot response and policy drift (2026-09-11, SM-X230)
 
 With the reboot route answering before `dpm.reboot`, the Home Assistant reboot button returned 200 and the tablet restarted into kiosk (HOME = KioskHome, Companion on top). The coordinator now re-pushes the desired policy when a status report or poll disagrees with it, at most once per 30 s; covered by `test_drifted_report_is_repushed`.
+
+## Lite tier on a Fire HD 8 Plus (2026-09-11, KFONWI, Fire OS 7.3.2.9, Android 9)
+
+Provisioned with `scripts/provision_lite.sh` steps by hand (set-active-admin,
+WRITE_SECURE_SETTINGS grant, lock_to_app_enabled, GET_USAGE_STATS and
+SYSTEM_ALERT_WINDOW app ops). Over `adb forward`:
+
+- `/v1/status` reports `tier: admin`, `is_device_owner: false`.
+- `PUT /v1/policy` with kiosk on (target com.amazon.kindle as a stand-in),
+  camera, stay-awake, status bar: kiosk `limited`, camera `applied`,
+  stay-awake `applied` (global setting read back as 7), Wi-Fi `applied`,
+  status bar and the rest `unsupported`.
+- Launcher brought to the front by `am start`: HomeWatch logged the redirect
+  and Kindle was resumed within 2 s. Kiosk off: launcher stays; stay-awake
+  read back as 0.
+- `lock_screen` 200; `reboot` 422 "not device owner".
+- Accessibility route tried first and abandoned: Fire OS delivered
+  systemui window events to the service but never the launcher's, even
+  with typeWindowsChanged and interactive-window retrieval.
+- Home Assistant test `test_lite_tier_limits_are_not_failures` covers the
+  tier sensors; not yet paired live (no Wi-Fi on the Fire and no Companion
+  APK installed at the time).
+

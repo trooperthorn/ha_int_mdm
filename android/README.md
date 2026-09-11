@@ -62,6 +62,20 @@ adb shell dpm set-device-owner com.trooperthorn.localmdm/.MdmDeviceAdminReceiver
 The app never disables adb. Keep USB debugging on; it is the recovery path if
 a policy misbehaves.
 
+## Lite tier (no Device Owner possible)
+
+Some vendor images cannot take a Device Owner at all; Fire OS 7 is one
+(docs/fire-os-assessment.md). Provision as a device admin instead:
+
+```bash
+scripts/provision_lite.sh <adb serial> app/build/outputs/apk/release/app-release.apk
+```
+
+The app then shows "Lite tier" and reports `tier: admin`. docs/protocol.md
+lists what each policy key can and cannot do in this tier; Home Assistant
+shows the reduced keys on the "Policies limited by tier" sensor rather than
+as enforcement problems.
+
 ## Verify on the tablet
 
 ```bash

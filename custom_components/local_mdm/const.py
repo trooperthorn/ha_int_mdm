@@ -59,3 +59,13 @@ ENFORCEMENT_APPLIED: Final = "applied"
 ENFORCEMENT_FAILED: Final = "failed"
 ENFORCEMENT_REFUSED: Final = "refused"
 ENFORCEMENT_PENDING: Final = "pending"
+# Lite tier (device admin, no Device Owner): limited = enforced with a
+# weaker mechanism the user can defeat; unsupported = no non-owner API.
+# Neither is an enforcement failure; both keep the "enforced" sensor off.
+ENFORCEMENT_LIMITED: Final = "limited"
+ENFORCEMENT_UNSUPPORTED: Final = "unsupported"
+TIER_LIMITS: Final[frozenset[str]] = frozenset({ENFORCEMENT_LIMITED, ENFORCEMENT_UNSUPPORTED})
+
+TIER_OWNER: Final = "owner"
+TIER_ADMIN: Final = "admin"
+TIER_NONE: Final = "none"

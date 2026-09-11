@@ -17,6 +17,7 @@ class MdmService : Service() {
     private lateinit var engine: PolicyEngine
     private lateinit var reporter: WebhookReporter
     private var server: HttpServer? = null
+    private var homeWatch: HomeWatch? = null
     private val handler = Handler(Looper.getMainLooper())
     private val heartbeat = object : Runnable {
         override fun run() {
@@ -33,10 +34,9 @@ class MdmService : Service() {
         startForeground(NOTIFICATION_ID, notification())
         // Re-assert the stored policy on every start: user restrictions
         // survive reboot, lock task mode does not.
-        if (engine.isDeviceOwner) {
-            engine.wifiControl.grantLocationToSelf()
-            engine.apply(store.policy, store.policyVersion)
-        }
+        if (engine.isDeviceOwner) engine.wifiControl.grantLocationToSelf()
+        if (engine.tier != PolicyEngine.TIER_NONE) engine.apply(store.policy, store.policyVersion)
+        if (engine.tier == PolicyEngine.TIER_ADMIN) homeWatch = HomeWatch(this, store).also { it.start() }
         val installer = Installer(this, store) { reporter.report() }
         server = HttpServer(PORT, store, engine, { reporter.report() }, installer).also {
             try {
@@ -59,6 +59,7 @@ class MdmService : Service() {
 
     override fun onDestroy() {
         handler.removeCallbacks(heartbeat)
+        homeWatch?.stop()
         server?.stop()
         super.onDestroy()
     }

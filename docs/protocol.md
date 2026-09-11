@@ -60,7 +60,15 @@ package, so a URL cannot replace an app with a look-alike; the sha256 adds
 transport integrity only.
 
 `enforcement` values: `applied`, `failed` (a RuntimeException from the
-platform), `refused` (SecurityException, or not Device Owner).
+platform), `refused` (SecurityException, or neither owner nor admin),
+`limited` (lite tier: enforced by a weaker mechanism the user can defeat)
+and `unsupported` (lite tier: no non-owner API). Home Assistant counts only
+`failed` and `refused` as enforcement problems; `limited` and `unsupported`
+are shown on the "Policies limited by tier" sensor and keep the per-key
+"enforced" sensor off.
+
+`tier` is `owner`, `admin` or `none`. Older DPCs omit it and Home Assistant
+derives it from `is_device_owner`.
 
 ## Policy keys and their Android calls
 
@@ -90,3 +98,23 @@ platform), `refused` (SecurityException, or not Device Owner).
 `global_settings`, `secure_settings`. A document containing any of them is
 rejected before any other validation, even with a `false` value, so the
 document as a whole never reaches `DevicePolicyManager`. See security.md.
+
+## Lite tier (device admin without Device Owner)
+
+For tablets whose vendor image blocks a Device Owner (Fire OS 7: Parental
+Controls is a protected profile owner, see docs/fire-os-assessment.md), the
+DPC runs as an active device admin provisioned by
+`android/scripts/provision_lite.sh`. The honest ceiling per key:
+
+| Key | Lite tier | Reported as |
+| --- | --- | --- |
+| `kiosk_mode` | HomeWatch polls usage events once a second (adb-granted usage access) and returns the stock launcher to the kiosk app; `startLockTask` gives screen pinning, which the user can exit with the back+recents gesture. Fire OS does not deliver launcher window events to third-party accessibility services, which is why polling is used | `limited`, or `failed` without usage access |
+| `camera_disabled` | `setCameraDisabled` (device admin policy) | `applied` |
+| `stay_awake_on_power` | `Settings.Global` write with the adb-granted `WRITE_SECURE_SETTINGS` | `applied`, or `unsupported` without the grant |
+| `wifi_always_on` | `setWifiEnabled(true)` on Android 9 | `applied` (Android 10+: `unsupported`) |
+| everything else | no non-owner API | `unsupported` |
+| `lock_screen` action | `lockNow` (device admin) | works |
+| `reboot` action | none | 422 |
+| `install_package` action | PackageInstaller shows the platform confirmation; `last_install` reports `awaiting_user` until the user answers | works with a tap |
+| `configure_wifi` action | `WifiManager.addNetwork` on Android 9 | works |
+
