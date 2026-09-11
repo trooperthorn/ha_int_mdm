@@ -14,6 +14,8 @@
 #   lock_to_app_enabled    allows startLockTask as screen pinning (the user
 #                          confirms the first pin; no true lock task)
 #   SYSTEM_ALERT_WINDOW    the lock splash may be drawn over the launcher
+#   REQUEST_INSTALL_PACKAGES  lets install_package open the platform confirm
+#                          dialog instead of being refused as an unknown source
 # It never touches adb, Wi-Fi, or developer options.
 set -euo pipefail
 serial="${1:?adb serial}"
@@ -27,5 +29,6 @@ $adb shell pm grant "$pkg" android.permission.WRITE_SECURE_SETTINGS
 $adb shell settings put secure lock_to_app_enabled 1
 $adb shell appops set "$pkg" GET_USAGE_STATS allow
 $adb shell appops set "$pkg" SYSTEM_ALERT_WINDOW allow
+$adb shell appops set "$pkg" REQUEST_INSTALL_PACKAGES allow
 $adb shell am start -n "$pkg/.MainActivity" >/dev/null
 echo "Lite tier provisioned on $serial. Open Local MDM on the tablet for the token; it reports tier=admin."
