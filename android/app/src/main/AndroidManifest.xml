@@ -12,6 +12,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Lite tier only: install_package hands the APK to the platform confirm
+         dialog; the app op is granted over adb by scripts/provision_lite.sh. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <!-- Lite tier only: never granted by the platform, only by "pm grant" over
          adb during provisioning. Lets the DPC keep stay-awake and its own
          accessibility service in step with the policy. -->

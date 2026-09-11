@@ -100,7 +100,9 @@ class HttpServer(
         if (sha256.isNotEmpty() && !sha256.matches(Regex("[0-9a-f]{64}"))) {
             return text(Response.Status.BAD_REQUEST, "sha256 must be 64 hex characters")
         }
-        if (!engine.isDeviceOwner) return text(UNPROCESSABLE_ENTITY, "not device owner")
+        // Lite tier installs too: the platform shows its confirm dialog and the
+        // install reports awaiting_user until the person on the tablet taps.
+        if (engine.tier == PolicyEngine.TIER_NONE) return text(UNPROCESSABLE_ENTITY, "not device owner or device admin")
         if (!installer.start(url, sha256.ifEmpty { null })) {
             return text(UNPROCESSABLE_ENTITY, "an install is already running")
         }
