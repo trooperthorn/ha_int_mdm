@@ -159,6 +159,7 @@ SYSTEM_ALERT_WINDOW app ops). Over `adb forward`:
 - Accessibility route tried first and abandoned: Fire OS delivered
   systemui window events to the service but never the launcher's, even
   with typeWindowsChanged and interactive-window retrieval.
+- Home Assistant test `test_lite_tier_limits_are_not_failures` covers the
   tier sensors.
 - Live on Home Assistant with Local MDM v2026.09.11.4 (Fire on Wi-Fi,
   192.168.30.69): `install_package` with the Companion 2026.6.5 minimal
