@@ -7,17 +7,17 @@ gotchas are things that actually happened.
 
 ## 0. What you need
 
-- The DPC APK, signed with the same key as the tablets already enrolled: a
-  differently signed build cannot update them in place. Until the release
-  workflow attaches `local-mdm-debug.apk` (backlog), build it on the
-  provisioning computer with the fleet's debug keystore in
-  `~/.android/debug.keystore`:
+- The DPC APK: `local-mdm-debug.apk` from the current GitHub release
+  (v2026.09.12.1 or later). Every release carries it, signed with the
+  fleet's keystore so it updates enrolled tablets in place. Verify it with
+  the release's SHA256SUMS. To build it yourself instead, the keystore in
+  `~/.android/debug.keystore` on the provisioning computer must be the
+  fleet one:
 
   ```bash
   cd android && JAVA_HOME="/c/Program Files/Android/Android Studio/jbr" ANDROID_HOME="$LOCALAPPDATA/Android/Sdk" ./gradlew assembleDebug
   ```
 
-  The APK lands in `app/build/outputs/apk/debug/app-debug.apk`.
 - adb on the computer (`platform-tools`), and a USB cable that carries data.
 - Home Assistant with Local MDM v2026.09.11.8 or later installed from HACS.
 - For a Fire tablet: the Companion **minimal** APK from the

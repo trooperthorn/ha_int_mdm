@@ -45,6 +45,12 @@ sha256sum --check SHA256SUMS --ignore-missing
 gh attestation verify local_mdm.zip -R trooperthorn/ha_int_mdm
 ```
 
+The release job also builds the DPC and attaches `local-mdm-debug.apk`,
+signed with the fleet keystore held in the `ANDROID_DEBUG_KEYSTORE_B64`
+repository secret (base64 of `~/.android/debug.keystore`). The job fails
+rather than publish a differently signed APK when the secret is missing;
+the signer digest is printed in the job summary.
+
 ## Branch protection
 
 Applied after the first green run on `main`, naming the job display names:

@@ -16,6 +16,7 @@ permissions:
 
 env:
   ARCHIVE: local_mdm.zip
+  APK: local-mdm-debug.apk
 
 jobs:
   tests:
@@ -77,6 +78,44 @@ jobs:
         if: steps.version.outputs.publish == 'true'
         run: python3 scripts/build_release_artifacts.py --output "dist/${ARCHIVE}"
 
+      # The DPC APK ships with every release, signed with the fleet's debug
+      # keystore (repository secret) so it updates enrolled tablets in place;
+      # a Device Owner cannot change signing key without a factory reset.
+      - uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # v5.0.0
+        if: steps.version.outputs.publish == 'true'
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+        if: steps.version.outputs.publish == 'true'
+        with:
+          cache-read-only: true
+      - name: Restore the fleet signing keystore
+        if: steps.version.outputs.publish == 'true'
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_DEBUG_KEYSTORE_B64 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$KEYSTORE_B64" ]; then
+            echo "::error::ANDROID_DEBUG_KEYSTORE_B64 is not set; the APK would carry a different signing key than the fleet."
+            exit 1
+          fi
+          mkdir -p ~/.android
+          printf '%s' "$KEYSTORE_B64" | base64 -d > ~/.android/debug.keystore
+          chmod 600 ~/.android/debug.keystore
+      - name: Build the DPC APK
+        if: steps.version.outputs.publish == 'true'
+        working-directory: android
+        run: |
+          ./gradlew assembleDebug --no-daemon
+          cp app/build/outputs/apk/debug/app-debug.apk "../dist/${APK}"
+      - name: Report the APK signer
+        if: steps.version.outputs.publish == 'true'
+        run: |
+          TOOL="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)/apksigner"
+          "$TOOL" verify --print-certs "dist/${APK}" | grep -E "SHA-256 digest" | tee -a "$GITHUB_STEP_SUMMARY"
+
       # See docs/security.md for the SBOM, attestation, and sequencing rules.
       - name: Generate SPDX SBOM
         if: steps.version.outputs.publish == 'true'
@@ -92,13 +131,19 @@ jobs:
       - name: Generate release checksums
         if: steps.version.outputs.publish == 'true'
         working-directory: dist
-        run: sha256sum "${ARCHIVE}" "${ARCHIVE}.spdx.json" > SHA256SUMS
+        run: sha256sum "${ARCHIVE}" "${ARCHIVE}.spdx.json" "${APK}" > SHA256SUMS
 
       - name: Attest build provenance
         if: steps.version.outputs.publish == 'true'
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
         with:
           subject-path: dist/${{ env.ARCHIVE }}
+
+      - name: Attest the DPC APK
+        if: steps.version.outputs.publish == 'true'
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-path: dist/${{ env.APK }}
 
       - name: Attest the release SBOM
         if: steps.version.outputs.publish == 'true'
@@ -129,7 +174,7 @@ jobs:
             gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
               --title "$TAG" --generate-notes --verify-tag --draft
           fi
-          gh release upload "$TAG" "dist/${ARCHIVE}" "dist/${ARCHIVE}.spdx.json" dist/SHA256SUMS \
+          gh release upload "$TAG" "dist/${ARCHIVE}" "dist/${ARCHIVE}.spdx.json" "dist/${APK}" dist/SHA256SUMS \
             --repo "$GITHUB_REPOSITORY" --clobber
 
       - name: Publish and lock the complete release
@@ -150,7 +195,7 @@ jobs:
             echo "Published \`$TAG\` from \`$GITHUB_SHA\`."
             echo
             echo '```bash'
-            echo "gh release download $TAG -R $GITHUB_REPOSITORY -p ${ARCHIVE} -p SHA256SUMS"
+            echo "gh release download $TAG -R $GITHUB_REPOSITORY -p ${ARCHIVE} -p ${APK} -p SHA256SUMS"
             echo 'sha256sum --check SHA256SUMS --ignore-missing'
             echo "gh attestation verify ${ARCHIVE} -R $GITHUB_REPOSITORY"
             echo '```'
