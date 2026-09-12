@@ -81,7 +81,7 @@ derives it from `is_device_owner`.
 | `camera_disabled` | `setCameraDisabled` | Needs `<disable-camera/>` in device_admin.xml |
 | `screen_capture_disabled` | `setScreenCaptureDisabled` | |
 | `status_bar_disabled` | `setStatusBarDisabled` | Device Owner only |
-| `install_apps_blocked` | `addUserRestriction(DISALLOW_INSTALL_APPS)` | |
+| `install_apps_blocked` | `addUserRestriction(DISALLOW_INSTALL_APPS)` | Also blocks adb installs and the DPC's own `install_package` (Android 17, 2026-09-12); turn it off around an install |
 | `uninstall_apps_blocked` | `addUserRestriction(DISALLOW_UNINSTALL_APPS)` | |
 | `usb_file_transfer_blocked` | `addUserRestriction(DISALLOW_USB_FILE_TRANSFER)` | Does not affect adb |
 | `adjust_volume_blocked` | `addUserRestriction(DISALLOW_ADJUST_VOLUME)` | |
