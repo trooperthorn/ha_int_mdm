@@ -32,6 +32,7 @@ class MdmService : Service() {
         store = PolicyStore(this)
         engine = PolicyEngine(this, store)
         reporter = WebhookReporter(store, engine)
+        settleSelfUpdate()
         startForeground(NOTIFICATION_ID, notification())
         // Re-assert the stored policy on every start: user restrictions
         // survive reboot, lock task mode does not.
@@ -48,6 +49,25 @@ class MdmService : Service() {
             }
         }
         handler.post(heartbeat)
+    }
+
+    /**
+     * A lite-tier update of this app through install_package kills the
+     * process before the installer's success callback arrives, so the
+     * stored state stays awaiting_user. A version change since the last
+     * start is that update having applied; record it as installed.
+     */
+    private fun settleSelfUpdate() {
+        val previous = store.lastSeenVersion
+        store.lastSeenVersion = BuildConfig.VERSION_NAME
+        val last = store.lastInstall ?: return
+        if (last.optString("state") != "awaiting_user") return
+        if (previous == null || previous == BuildConfig.VERSION_NAME) return
+        store.lastInstall = last
+            .put("state", "installed")
+            .put("message", "self-update applied ($previous -> ${BuildConfig.VERSION_NAME})")
+            .put("package", packageName)
+            .put("at", java.time.Instant.now().toString())
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
