@@ -120,6 +120,25 @@ SENSORS: tuple[LocalMdmSensorDescription, ...] = (
 )
 
 
+ACTION_SENSORS: tuple[SensorEntityDescription, ...] = (
+    SensorEntityDescription(
+        key="last_lock_screen",
+        translation_key="last_lock_screen",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SensorEntityDescription(
+        key="last_reboot",
+        translation_key="last_reboot",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SensorEntityDescription(
+        key="last_configure_wifi",
+        translation_key="last_configure_wifi",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+)
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: LocalMdmConfigEntry,
@@ -127,7 +146,10 @@ async def async_setup_entry(
 ) -> None:
     """Create the sensors."""
     coordinator = entry.runtime_data
-    async_add_entities(LocalMdmSensor(coordinator, d) for d in SENSORS)
+    async_add_entities(
+        [LocalMdmSensor(coordinator, d) for d in SENSORS]
+        + [LocalMdmActionSensor(coordinator, d) for d in ACTION_SENSORS]
+    )
 
 
 class LocalMdmSensor(LocalMdmEntity, SensorEntity):
@@ -159,3 +181,24 @@ class LocalMdmSensor(LocalMdmEntity, SensorEntity):
             case "pending_packages":
                 return {"packages": status.pending_packages, "unsuspendable": status.unsuspendable}
         return None
+
+
+class LocalMdmActionSensor(LocalMdmEntity, SensorEntity):
+    """Outcome of an immediate action (lock_screen, reboot, configure_wifi).
+
+    These actions answer with a bare acknowledgement and nothing to poll
+    afterwards, so the result lives on the coordinator, not the DPC status
+    document; ``None`` until the action has run at least once this session.
+    """
+
+    @property
+    def native_value(self) -> Any:
+        action = self.coordinator.last_actions.get(self.entity_description.key)
+        return action["result"] if action else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        action = self.coordinator.last_actions.get(self.entity_description.key)
+        if action is None:
+            return None
+        return {"message": action["message"], "at": action["at"]}

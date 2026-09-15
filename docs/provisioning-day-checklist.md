@@ -14,8 +14,9 @@ sheet, not the reference.
 - [ ] Home Assistant reachable, Local MDM v2026.09.11.8 or later installed.
 - [ ] Tablet Wi-Fi network name and password (must be the network Home
       Assistant is on, not a guest network).
-- [ ] Fire tablet only: Companion **minimal** APK from the
-      home-assistant/android releases.
+- [ ] Companion APK fetched and digest-verified for the tablet's flavor:
+      `scripts/fetch_companion_apk.sh full` (Samsung/Pixel) or
+      `scripts/fetch_companion_apk.sh minimal` (Fire).
 - [ ] Know the tier before you touch the tablet:
 
   | Tablet | Tier |
@@ -51,11 +52,12 @@ From the `android/` folder of this repository:
 
 - [ ] Confirm the tablet shows up: `adb devices`
 - [ ] Device Owner tablet:
-      `scripts/provision_owner.sh <adb serial> path/to/local-mdm-debug.apk`
+      `scripts/provision_owner.sh <adb serial> path/to/local-mdm-debug.apk app-full-release.apk`
 - [ ] Fire tablet:
-      `scripts/provision_lite.sh <adb serial> path/to/local-mdm-debug.apk`
+      `scripts/provision_lite.sh <adb serial> path/to/local-mdm-debug.apk app-minimal-release.apk`
 - [ ] Script printed an address and token (or told you to read them off the
-      app screen) — write them down before moving on.
+      app screen) — write them down before moving on. Companion is now
+      installed on the tablet, signed out.
 - [ ] Owner script refused to run? An account or extra user is still on the
       tablet — back to step 1.
 
@@ -73,20 +75,20 @@ From the `android/` folder of this repository:
   - Fire: `io.homeassistant.companion.android.minimal`
 - [ ] Turn on the switches this tablet needs, or select a profile (step 6).
 
-## 5. Install and sign in to Companion
+## 5. Sign in to Companion
 
-- [ ] Turn **install apps blocked** off before installing anything, on every
-      tier.
-- [ ] Device Owner tablet with a Google account: add the account back, then
-      install Companion from Play.
-- [ ] Every other case (no Google account, or any Fire): call
-      `local_mdm.install_package` with the release APK URL and its SHA-256.
-- [ ] Lite tier only: tap Install on the platform's install dialog that
-      appears on the tablet.
-- [ ] Turn **install apps blocked** back on.
+Companion is already installed from step 2 — this step is on-screen only.
+
+- [ ] Device Owner tablet that will carry a Google account: add the account
+      back now (not required to sign in, just lets Play update Companion
+      later).
 - [ ] On the tablet: sign in to Companion with the Home Assistant URL and a
       user account. Nobody can do this step over adb — it has to happen on
       the screen.
+- [ ] Skipped the companion APK in step 2, or provisioning an older release?
+      Turn **install apps blocked** off, call `local_mdm.install_package`
+      with the release APK URL and SHA-256, tap Install on the tablet if
+      prompted (lite tier), then turn **install apps blocked** back on.
 
 ## 6. Apply a profile (optional)
 

@@ -14,6 +14,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.util import dt as dt_util
 
 from .api import (
     DeviceStatus,
@@ -61,6 +62,21 @@ class LocalMdmCoordinator(DataUpdateCoordinator[DeviceStatus]):
         self._push_lock = asyncio.Lock()
         self._last_reconcile: float | None = None
         self._known_mac: str | None = None
+        # The DPC's status document only tracks the outcome of install_package
+        # (last_install); lock_screen, reboot, and configure_wifi answer
+        # {"ok": true} with nothing to poll afterwards, so their result is
+        # recorded here instead, one entry per action, keyed by the sensor's
+        # translation key.
+        self.last_actions: dict[str, dict[str, Any]] = {}
+
+    def _record_action(self, key: str, *, message: str | None = None) -> None:
+        """Record the outcome of an immediate action and notify listeners."""
+        self.last_actions[key] = {
+            "result": "error" if message else "ok",
+            "message": message,
+            "at": dt_util.utcnow().isoformat(),
+        }
+        self.async_update_listeners()
 
     async def _async_setup(self) -> None:
         # The tablet's applied policy is the source of truth after a restart;
@@ -223,29 +239,39 @@ class LocalMdmCoordinator(DataUpdateCoordinator[DeviceStatus]):
         try:
             await self.client.async_lock_screen()
         except LocalMdmAuthError as err:
+            self._record_action("last_lock_screen", message=str(err))
             raise ConfigEntryAuthFailed(str(err)) from err
         except LocalMdmConnectionError as err:
+            self._record_action("last_lock_screen", message=str(err))
             raise HomeAssistantError(f"Could not lock the screen: {err}") from err
+        self._record_action("last_lock_screen")
 
     async def async_reboot(self) -> None:
         """Reboot the tablet now."""
         try:
             await self.client.async_reboot()
         except LocalMdmAuthError as err:
+            self._record_action("last_reboot", message=str(err))
             raise ConfigEntryAuthFailed(str(err)) from err
         except (LocalMdmPolicyRefusedError, LocalMdmConnectionError) as err:
+            self._record_action("last_reboot", message=str(err))
             raise HomeAssistantError(f"Could not reboot: {err}") from err
+        self._record_action("last_reboot")
 
     async def async_configure_wifi(self, ssid: str, password: str | None, hidden: bool) -> None:
         """Provision a Wi-Fi network on the tablet."""
         try:
             await self.client.async_configure_wifi(ssid, password, hidden)
         except LocalMdmAuthError as err:
+            self._record_action("last_configure_wifi", message=str(err))
             raise ConfigEntryAuthFailed(str(err)) from err
         except LocalMdmPolicyRefusedError as err:
+            self._record_action("last_configure_wifi", message=str(err))
             raise HomeAssistantError(f"DPC refused the Wi-Fi network: {err}") from err
         except LocalMdmConnectionError as err:
+            self._record_action("last_configure_wifi", message=str(err))
             raise HomeAssistantError(f"Could not configure Wi-Fi: {err}") from err
+        self._record_action("last_configure_wifi")
 
     async def async_install_package(self, url: str, sha256: str | None) -> None:
         """Start a silent APK install; the result arrives as a report."""
