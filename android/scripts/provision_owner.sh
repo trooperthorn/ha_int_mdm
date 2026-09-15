@@ -2,16 +2,20 @@
 # Device Owner provisioning for a tablet that can take one (Samsung, Pixel,
 # stock Android). Run once per tablet over USB after the checks below pass.
 #
-#   scripts/provision_owner.sh <adb serial> [path/to/app.apk]
+#   scripts/provision_owner.sh <adb serial> [path/to/app.apk] [path/to/companion.apk]
 #
 # Preconditions it verifies before touching the tablet:
 #   - exactly one user (a supervised child user blocks set-device-owner)
 #   - no accounts (remove them in Settings > Passwords & accounts; add back after)
 #   - the DPC is not already the owner (safe to re-run for a reinstall)
 # It never touches adb, Wi-Fi, or developer options: those are the recovery path.
+# The companion APK (app-full-release.apk from fetch_companion_apk.sh full) is
+# side-loaded in the same pass if given; sign-in still has to happen on the
+# tablet screen, adb cannot do that part.
 set -euo pipefail
 serial="${1:?adb serial}"
 apk="${2:-app/build/outputs/apk/release/app-release.apk}"
+companion_apk="${3:-}"
 pkg=com.trooperthorn.localmdm
 admin="$pkg/.MdmDeviceAdminReceiver"
 adb="adb -s $serial"
@@ -35,6 +39,11 @@ if $adb shell dumpsys device_policy | grep -q "Device Owner"; then
 else
   $adb shell dpm set-device-owner "$admin"
 fi
+if [ -n "$companion_apk" ]; then
+  echo "Installing Companion: $companion_apk"
+  $adb install -r "$companion_apk"
+fi
+
 $adb shell am start -n "$pkg/.MainActivity" >/dev/null 2>&1 || true
 sleep 3
 ip=$($adb shell ip -4 addr show wlan0 2>/dev/null | grep -oE 'inet [0-9.]+' | cut -d' ' -f2 || true)
@@ -46,3 +55,6 @@ echo "  Address : ${ip:-<read from the app screen>}:8484"
 echo "  Token   : ${token:-<read from the app screen; release builds do not expose it over adb>}"
 echo "Next: Home Assistant > Settings > Devices & services > Add integration > Local MDM, enter the address and token."
 echo "Then add the Google account back on the tablet if it needs one, before applying a profile that locks accounts."
+if [ -n "$companion_apk" ]; then
+  echo "Companion is installed; sign in to it on the tablet screen with the Home Assistant URL and a user account."
+fi

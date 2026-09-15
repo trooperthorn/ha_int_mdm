@@ -179,6 +179,15 @@
       "last_install": {
         "name": "Last install"
       },
+      "last_lock_screen": {
+        "name": "Last lock screen"
+      },
+      "last_reboot": {
+        "name": "Last reboot"
+      },
+      "last_configure_wifi": {
+        "name": "Last Wi-Fi configure"
+      },
       "management_tier": {
         "name": "Management tier"
       },

@@ -56,19 +56,34 @@ Fire tablets:
 
 ## 3. Provision
 
-From the `android/` folder of this repository:
+From the `android/` folder of this repository, fetch the current Companion
+build for the tablet's flavor first (verified against the digest GitHub
+publishes for the release asset):
+
+```bash
+# Device Owner tablets (Samsung, Pixel, any stock Android)
+scripts/fetch_companion_apk.sh full
+
+# Fire tablets (no Google services)
+scripts/fetch_companion_apk.sh minimal
+```
+
+Then provision, passing the Companion APK as the third argument so it is
+side-loaded in the same adb pass as the DPC:
 
 ```bash
 # Device Owner
-scripts/provision_owner.sh <adb serial> path/to/local-mdm-debug.apk
+scripts/provision_owner.sh <adb serial> path/to/local-mdm-debug.apk app-full-release.apk
 
 # Fire (lite)
-scripts/provision_lite.sh <adb serial> path/to/local-mdm-debug.apk
+scripts/provision_lite.sh <adb serial> path/to/local-mdm-debug.apk app-minimal-release.apk
 ```
 
 `adb devices` shows the serial. Both scripts print the tablet's address and
 token at the end (or tell you to read them from the app's screen). The
-owner script refuses to run while accounts or extra users remain.
+owner script refuses to run while accounts or extra users remain. Companion
+is now installed but signed out; step 5 below is what's left to do on the
+tablet screen — sign-in can't happen over adb.
 
 ## 4. Pair with Home Assistant
 
@@ -84,14 +99,17 @@ Then, on the device page:
   `io.homeassistant.companion.android.minimal` (the suffix matters).
 - Turn on the switches the tablet needs, or select a profile (step 6).
 
-## 5. Install and sign in to Companion
+## 5. Sign in to Companion
 
-Device Owner tablets with a Google account: install Companion from Play
-after adding the account back. Otherwise, and on every Fire, use the
-`local_mdm.install_package` action with the release APK URL and its SHA-256.
-On the lite tier the tablet shows the platform's install dialog; tap
-Install there. The app installs blocked switch must be off for the install
-to go through, on every tier.
+Companion was already installed in step 3. Device Owner tablets that will
+carry a Google account: add the account back first if you want Play to be
+able to update Companion later; it isn't required to sign in.
+
+If a tablet was provisioned without the companion APK (an older release, or
+`fetch_companion_apk.sh` skipped), fall back to the
+`local_mdm.install_package` action with the release APK URL and its
+SHA-256; the app installs blocked switch must be off for that install to go
+through, on every tier.
 
 Sign in to Companion on the tablet with the Home Assistant URL and a user
 account. This is the one step nobody can do over adb.

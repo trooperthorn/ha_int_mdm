@@ -10,6 +10,7 @@ carries only what a reader needs at the point of reading; explanation lives here
 - `security.md`: trust boundaries, the network-brick guard, what is enforced versus
   advisory, and what the design does not defend against.
 - `onboarding.md`: the repeatable process for adding a tablet (tier choice, prepare, provision scripts, pair, Companion, profile, verify, gotchas)
+- `provisioning-day-checklist.md`: printable run sheet for the adb pass, distilled from onboarding.md
 - `operations.md`: test gate, release path, GitHub App, branch protection, runtime
   knobs, and troubleshooting.
 - `decisions.md`: dated decisions with the alternative rejected and why.
