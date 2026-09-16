@@ -60,6 +60,12 @@ class DeviceStatus:
     policy: dict[str, Any]
     enforcement: dict[str, str]
     lock_task_active: bool
+    # False when this status is a stand-in for a tablet the coordinator could
+    # not reach (asleep, mid-reboot, off Wi-Fi): every other field then holds
+    # the last-known report, or offline() defaults when there never was one.
+    # Connectivity is data, not a coordinator failure, so the config entry
+    # and every entity stay available through it; see coordinator._fetch.
+    is_reachable: bool = True
     tier: str = TIER_NONE
     battery_level: int | None = None
     battery_charging: bool | None = None
@@ -139,6 +145,24 @@ class DeviceStatus:
             )
         except (KeyError, TypeError, ValueError, AttributeError) as err:
             raise ValueError(f"Malformed DPC status payload: {err}") from err
+
+    @classmethod
+    def offline(cls, device_id: str) -> DeviceStatus:
+        """A placeholder for a tablet that has never reported in yet.
+
+        Used only when the coordinator has no prior status to fall back on
+        (typically: unreachable during the very first setup).
+        """
+        return cls(
+            device_id=device_id,
+            dpc_version="unknown",
+            is_device_owner=False,
+            policy_version=0,
+            policy={},
+            enforcement={},
+            lock_task_active=False,
+            is_reachable=False,
+        )
 
 
 def _opt_mac(value: Any) -> str | None:

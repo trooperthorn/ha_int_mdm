@@ -105,6 +105,9 @@
       "battery_charging": {
         "name": "Charging"
       },
+      "reachable": {
+        "name": "Reachable"
+      },
       "kiosk_mode_enforced": {
         "name": "Kiosk mode enforced"
       },

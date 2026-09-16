@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
+from dataclasses import replace
 from datetime import timedelta
 from typing import Any
 
@@ -13,7 +14,7 @@ from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers import device_registry as dr, entity_registry as er
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
 
 from .api import (
@@ -23,7 +24,7 @@ from .api import (
     LocalMdmConnectionError,
     LocalMdmPolicyRefusedError,
 )
-from .const import DOMAIN, POLICY_ALLOWED_PACKAGES, POLICY_KIOSK_PACKAGES
+from .const import CONF_DEVICE_ID, DOMAIN, POLICY_ALLOWED_PACKAGES, POLICY_KIOSK_PACKAGES
 from .policy import InvalidPolicyError, UnsafePolicyError, default_policy, validate_policy
 
 _LOGGER = logging.getLogger(__name__)
@@ -143,7 +144,7 @@ class LocalMdmCoordinator(DataUpdateCoordinator[DeviceStatus]):
         2026-09-11). Home Assistant owns the desired policy after setup, so a
         report that disagrees is drift, not a new source of truth.
         """
-        if self.data is None or self._push_lock.locked():
+        if not status.is_reachable or self.data is None or self._push_lock.locked():
             return
         try:
             reported = validate_policy(status.policy)
@@ -167,12 +168,23 @@ class LocalMdmCoordinator(DataUpdateCoordinator[DeviceStatus]):
             _LOGGER.warning("Re-push after drift failed: %s", err)
 
     async def _fetch(self) -> DeviceStatus:
+        """Fetch the tablet's status, or fall back to it being unreachable.
+
+        A tablet that is asleep, mid-reboot, or off Wi-Fi must not block this
+        config entry from loading, nor make every entity unavailable for as
+        long as the retry backoff takes: connectivity is data
+        (DeviceStatus.is_reachable), not a coordinator failure. Only a bad
+        token is treated as an integration failure, since that needs reauth
+        rather than a retry.
+        """
         try:
             return await self.client.async_get_status()
         except LocalMdmAuthError as err:
             raise ConfigEntryAuthFailed(str(err)) from err
         except LocalMdmConnectionError as err:
-            raise UpdateFailed(str(err)) from err
+            _LOGGER.debug("Tablet unreachable (%s); keeping the last-known status", err)
+            base = self.data or DeviceStatus.offline(self.config_entry.data[CONF_DEVICE_ID])
+            return replace(base, is_reachable=False)
 
     def async_handle_push(self, payload: dict[str, Any]) -> bool:
         """Accept a webhook report; returns False when it is not for this device."""

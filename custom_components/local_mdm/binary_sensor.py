@@ -67,6 +67,13 @@ STATUS_SENSORS: tuple[LocalMdmBinarySensorDescription, ...] = (
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda s: s.battery_charging,
     ),
+    LocalMdmBinarySensorDescription(
+        key="reachable",
+        translation_key="reachable",
+        device_class=BinarySensorDeviceClass.CONNECTIVITY,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda s: s.is_reachable,
+    ),
 )
 
 # One "enforced" sensor per policy flag: on only when the DPC reports the
