@@ -81,7 +81,7 @@ jobs:
       # The DPC APK ships with every release, signed with the fleet's debug
       # keystore (repository secret) so it updates enrolled tablets in place;
       # a Device Owner cannot change signing key without a factory reset.
-      - uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # v5.0.0
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         if: steps.version.outputs.publish == 'true'
         with:
           distribution: temurin
