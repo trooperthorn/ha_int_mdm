@@ -131,3 +131,28 @@ even with the location permission granted and location on. The DPC keeps the
 last good value while the transport is still Wi-Fi and clears it when the
 connection drops, so Home Assistant's Wi-Fi network sensor no longer flickers
 to unknown between heartbeats.
+
+## 2026-09-29: UniFi Network as the address book
+
+Rejected for now: zeroconf announcements from the DPC (the tablet VLAN
+needs an mDNS reflector) and a pairing code on the tablet screen (a protocol
+change on both sides). Chosen: each tablet is a UniFi client with a fixed
+IP and a `Room-Tab` name, and the integration reads the UniFi Network
+integration's client trackers. The config flow offers connected, unpaired
+`Room-Tab` clients, and the coordinator follows a tablet whose address
+changed by looking its MAC up in UniFi. A new address is adopted only when
+the tablet there accepts the stored token and reports the entry's device
+id, so a stale or spoofed tracker cannot redirect the entry. Area matching
+never creates an area.
+
+## 2026-09-29: the policy is unknown until the tablet answers
+
+Found on the live fleet: a Home Assistant start with the tablets asleep put
+every entry in setup retry (the webhook PUT raised `ConfigEntryNotReady`,
+undoing the intent of the unreachable-is-data change), and the placeholder
+policy of an unreachable tablet would have been re-pushed as drift the
+moment it came back, turning its policies off. Chosen: the webhook URL is
+kept and resent on the tablet's next answer; the desired policy is taken
+from the tablet's first report after setup; drift reconciliation and every
+switch write wait for that, and a write while it is still unknown is
+refused with an error rather than built on the placeholder.

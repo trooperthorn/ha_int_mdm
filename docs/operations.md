@@ -72,7 +72,10 @@ conversation resolution, no force push, no deletion, zero required approvals.
 | Symptom | Check |
 | --- | --- |
 | Setup says cannot connect | `curl -H "Authorization: Bearer <token>" http://<tablet>:8484/v1/status` from the Home Assistant host |
-| Setup retries with "Could not register the webhook" | The status call worked but the webhook PUT did not; look at `adb logcat -s LocalMdm.Http` |
+| Entry loaded, `last_report` never updates | The webhook URL has not reached the tablet yet; it is resent on the tablet's next answer. If it persists, look at `adb logcat -s LocalMdm.Http LocalMdm.Webhook` |
+| Switch change refused with "current policy is unknown" | The tablet has not answered since Home Assistant started; nothing is sent until its applied policy has been read, so an offline start cannot turn its policies off |
+| No "Pick the tablet from UniFi Network" choice | The UniFi client is not named `Room-Tab`, is not connected (the UniFi tracker has no IP), or its MAC is already paired |
+| Log says "Tablet moved from ... (found through UniFi)" | The UniFi reservation is missing or the tablet is on a random MAC; see docs/onboarding.md, "Address plan" |
 | Switch turns on, enforced sensor stays off | Read the switch's `enforcement` attribute: `refused` means not Device Owner, `failed` means a platform exception in `adb logcat -s LocalMdm.Policy` |
 | `last_report` stops updating | The tablet's report is not reaching the webhook: wrong internal URL, or the source address is not local. Reload the entry to resend the URL |
 | Reauth prompt after rotating the token | Expected; enter the new token |
