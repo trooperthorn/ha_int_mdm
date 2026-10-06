@@ -35,8 +35,21 @@ $adb shell pm grant "$pkg" android.permission.WRITE_SECURE_SETTINGS
 $adb shell appops set "$pkg" GET_USAGE_STATS allow
 $adb shell appops set "$pkg" SYSTEM_ALERT_WINDOW allow
 $adb shell appops set "$pkg" REQUEST_INSTALL_PACKAGES allow
+# Keep the DPC out of Doze's network cutoff; the entry survives reboots.
+$adb shell dumpsys deviceidle whitelist +"$pkg" >/dev/null 2>&1 || true
 $adb shell am start -n "$pkg/.MainActivity" >/dev/null
+# Fire OS 7 (Android 9) does not randomise the Wi-Fi MAC, so the one in use
+# is the one to reserve in UniFi (docs/onboarding.md, "Address plan").
+factory_mac=""
+current_mac=$($adb shell cat /sys/class/net/wlan0/address 2>/dev/null | tr -d '\r' || true)
 echo "Lite tier provisioned on $serial. Open Local MDM on the tablet for the token; it reports tier=admin."
+echo
+echo "UniFi Network, before pairing (Client Devices > this tablet > Settings):"
+echo "  Name      : <Room>-Tab, for example Kitchen-Tab"
+echo "  Fixed IP  : on, an address in the tablet network"
+echo "  MAC       : factory ${factory_mac:-<Settings > About tablet > Status>}; in use now ${current_mac:-unknown}"
+echo "  On the tablet: Wi-Fi > this network > Privacy > Use device MAC, then reconnect."
+echo "Home Assistant > Add integration > Local MDM then offers the tablet by name; only the token is typed."
 if [ -n "$companion_apk" ]; then
   echo "Companion (minimal) is installed; sign in to it on the tablet screen with the Home Assistant URL and a user account."
 fi
