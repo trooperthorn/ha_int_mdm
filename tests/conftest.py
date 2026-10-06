@@ -82,10 +82,20 @@ class FakeClient:
         self.wifi_calls: list[tuple[str, str | None, bool]] = []
         self.fail_with: Exception | None = None
         self.webhook_fail_with: Exception | None = None
+        self.host = "192.0.2.10"
+        # Addresses where the tablet does not answer; shared by with_host copies.
+        self.down_hosts: set[str] = set()
 
     def _raise_if_failing(self) -> None:
         if self.fail_with is not None:
             raise self.fail_with
+        if self.host in self.down_hosts:
+            raise LocalMdmConnectionError(f"{self.host} down")
+
+    def with_host(self, host: str) -> FakeClient:
+        other = copy.copy(self)
+        other.host = host
+        return other
 
     async def async_get_status(self) -> DeviceStatus:
         self._raise_if_failing()
@@ -104,6 +114,7 @@ class FakeClient:
     async def async_set_webhook(self, url: str) -> None:
         if self.webhook_fail_with is not None:
             raise self.webhook_fail_with
+        self._raise_if_failing()
         self.webhook_url = url
 
     async def async_lock_screen(self) -> None:

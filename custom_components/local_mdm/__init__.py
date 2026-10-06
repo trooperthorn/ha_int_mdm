@@ -10,12 +10,11 @@ from aiohttp.web import Request, Response
 from homeassistant.components import webhook
 from homeassistant.const import CONF_HOST, CONF_PORT, Platform
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.typing import ConfigType
 
-from .api import LocalMdmAuthError, LocalMdmClient, LocalMdmConnectionError
+from .api import LocalMdmClient
 from .const import (
     CONF_SCAN_INTERVAL,
     CONF_TOKEN,
@@ -75,15 +74,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: LocalMdmConfigEntry) -> 
     )
     entry.async_on_unload(lambda: webhook.async_unregister(hass, webhook_id))
 
-    # The DPC learns where to report from us, so a changed HA address heals
-    # on the next reload; an unreachable webhook is a warning, not a failure.
-    try:
-        url = webhook.async_generate_url(hass, webhook_id, allow_external=False, allow_ip=True)
-        await client.async_set_webhook(url)
-    except LocalMdmAuthError as err:
-        raise ConfigEntryAuthFailed(str(err)) from err
-    except LocalMdmConnectionError as err:
-        raise ConfigEntryNotReady(f"Could not register the webhook with the DPC: {err}") from err
+    # The DPC learns where to report from us. A tablet that is asleep or off
+    # Wi-Fi gets the URL on its next answer (coordinator.async_send_webhook),
+    # so it never holds the entry in setup retry.
+    url = webhook.async_generate_url(hass, webhook_id, allow_external=False, allow_ip=True)
+    await coordinator.async_send_webhook(url)
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True

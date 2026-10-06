@@ -206,9 +206,23 @@ class LocalMdmClient:
         timeout: float = REQUEST_TIMEOUT,
     ) -> None:
         self._session = session
+        self._host = host
+        self._port = port
+        self._token = token
         self._base = f"http://{host}:{port}/{API_VERSION}"
         self._headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
         self._timeout = aiohttp.ClientTimeout(total=timeout)
+
+    @property
+    def host(self) -> str:
+        """The address this client talks to."""
+        return self._host
+
+    def with_host(self, host: str) -> LocalMdmClient:
+        """A client for the same tablet and token at another address."""
+        return LocalMdmClient(
+            self._session, host, self._port, self._token, timeout=self._timeout.total or 0
+        )
 
     async def _request(self, method: str, path: str, json: Any = None) -> dict[str, Any]:
         try:

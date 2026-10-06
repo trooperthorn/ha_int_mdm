@@ -64,7 +64,10 @@ adb shell dpm set-device-owner com.trooperthorn.localmdm/.MdmDeviceAdminReceiver
 1. Add this repository to HACS as a custom integration repository, or copy
    `custom_components/local_mdm` into your config directory.
 2. Restart Home Assistant.
-3. Settings, Devices & services, Add integration, "Local MDM". Enter the
+3. Settings, Devices & services, Add integration, "Local MDM". With the
+   UniFi Network integration loaded, pick the tablet by its UniFi name
+   (`Room-Tab`, fixed IP; see docs/onboarding.md, "Address plan") and enter
+   only the token. Otherwise enter the
    address, port, and token from the tablet.
 
 The integration registers a local-only webhook and tells the tablet its URL.
