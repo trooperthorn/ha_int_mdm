@@ -12,6 +12,10 @@ CONF_TOKEN: Final = "token"
 CONF_SCAN_INTERVAL: Final = "scan_interval"
 CONF_WEBHOOK_ID: Final = "webhook_id"
 CONF_DEVICE_ID: Final = "device_id"
+# Wi-Fi MAC of the tablet, from the UniFi client it was paired from.
+CONF_MAC: Final = "mac"
+# Area name matching the Room part of the UniFi alias, applied once.
+CONF_SUGGESTED_AREA: Final = "suggested_area"
 
 DEFAULT_PORT: Final = 8484
 DEFAULT_SCAN_INTERVAL: Final = 60
