@@ -3,8 +3,6 @@ and the acceptance round trip, using only the REST API. Local test instance only
 
 import json
 import os
-import pathlib
-import secrets
 import sys
 import time
 import urllib.error
@@ -44,7 +42,11 @@ def state(entity_id):
 # 1. onboarding
 code, steps = call("GET", "/api/onboarding", auth=False)
 if any(s["step"] == "user" and not s["done"] for s in steps):
-    password = secrets.token_urlsafe(16)
+    # The caller chooses the test user's password, so the harness never has
+    # to store or print one; the other scripts log in with the same value.
+    password = os.environ.get("LOCAL_MDM_HA_PASSWORD")
+    if not password:
+        sys.exit("set LOCAL_MDM_HA_PASSWORD to the password for the new mdmtester user")
     code, r = call(
         "POST",
         "/api/onboarding/users",
@@ -66,12 +68,7 @@ if any(s["step"] == "user" and not s["done"] for s in steps):
     )
     assert code == 200, tok
     TOKEN = tok["access_token"]
-    # Never echoed: the password goes to a file only this user can read.
-    secret = pathlib.Path(os.environ.get("LOCAL_MDM_PASSWORD_FILE", "mdmtester.password"))
-    secret.touch(mode=0o600)
-    secret.chmod(0o600)
-    secret.write_text(f"{password}\n")
-    print("onboarded user mdmtester; password written to", secret.resolve())
+    print("onboarded user mdmtester")
     for path, body in (
         ("/api/onboarding/core_config", {}),
         ("/api/onboarding/analytics", {}),

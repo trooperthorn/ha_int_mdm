@@ -21,6 +21,9 @@ Credentials are passed in as arguments or named by environment variables,
 never hardcoded: `LOCAL_MDM_HA_URL` and `LOCAL_MDM_HA_TOKEN_FILE` (a file
 holding a long-lived access token) for `ws_query.py`, and
 `LOCAL_MDM_HA_CONFIG` (default `~/mdm-ha-config`) for the scripts that read
-the test instance's device registry. The device-id
+the test instance's device registry.
+`drive_ha.py` onboards a fresh instance with the user `mdmtester` and the
+password in `LOCAL_MDM_HA_PASSWORD`; the other scripts take the same
+username and password as arguments. The device-id
 prefixes in `install_check.py`, `os_check.py` and `tablet_drive.py` refer to
 specific test tablets and need changing for other hardware.
