@@ -13,4 +13,6 @@ code, r = ha.call("POST", f"/api/services/switch/turn_{action}", {"entity_id": k
 print("service", code)
 for i in range(8):
     time.sleep(0.5)
-    print(f"t+{(i+1)*0.5:.1f}s switch={ha.state(kiosk_switch)} lock_sensor={ha.state(kiosk_lock)} enforced={ha.state(kiosk_enf)}")
+    print(
+        f"t+{(i + 1) * 0.5:.1f}s switch={ha.state(kiosk_switch)} lock_sensor={ha.state(kiosk_lock)} enforced={ha.state(kiosk_enf)}"
+    )
