@@ -5,6 +5,12 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    groups:
+      # init and analyze must run the same CodeQL version; bumped apart, the
+      # analyze step refuses the configuration init wrote.
+      codeql:
+        patterns:
+          - "github/codeql-action*"
   - package-ecosystem: pip
     directory: /
     schedule:
