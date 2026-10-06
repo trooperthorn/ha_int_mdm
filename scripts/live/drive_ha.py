@@ -2,6 +2,8 @@
 and the acceptance round trip, using only the REST API. Local test instance only."""
 
 import json
+import os
+import pathlib
 import secrets
 import sys
 import time
@@ -64,7 +66,12 @@ if any(s["step"] == "user" and not s["done"] for s in steps):
     )
     assert code == 200, tok
     TOKEN = tok["access_token"]
-    print("onboarded user mdmtester, password:", password)
+    # Never echoed: the password goes to a file only this user can read.
+    secret = pathlib.Path(os.environ.get("LOCAL_MDM_PASSWORD_FILE", "mdmtester.password"))
+    secret.touch(mode=0o600)
+    secret.chmod(0o600)
+    secret.write_text(f"{password}\n")
+    print("onboarded user mdmtester; password written to", secret.resolve())
     for path, body in (
         ("/api/onboarding/core_config", {}),
         ("/api/onboarding/analytics", {}),
@@ -189,4 +196,4 @@ print(
 call("POST", "/api/services/switch/turn_off", {"entity_id": kiosk_switch})
 time.sleep(1.5)
 print("kiosk off:", state(kiosk_switch), "lock sensor", state(kiosk_lock))
-print("entry_id", entry_id, "token", TOKEN[:12] + "...")
+print("entry_id", entry_id)
