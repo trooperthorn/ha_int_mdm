@@ -30,13 +30,11 @@ INSTALL_SCHEMA = vol.Schema(
 
 
 def _coordinator_for_device(hass: HomeAssistant, device_id: str) -> LocalMdmCoordinator:
-    device = dr.async_get(hass).async_get(device_id)
+    device, entry = dr.async_get_device_and_config_entry_for_domain(hass, device_id, domain=DOMAIN)
     if device is None:
         raise ServiceValidationError(f"Device {device_id} does not exist")
-    for entry_id in device.config_entries:
-        entry = hass.config_entries.async_get_entry(entry_id)
-        if entry is not None and entry.domain == DOMAIN and hasattr(entry, "runtime_data"):
-            return entry.runtime_data
+    if entry is not None and hasattr(entry, "runtime_data"):
+        return entry.runtime_data
     raise ServiceValidationError(f"Device {device_id} is not a loaded Local MDM tablet")
 
 

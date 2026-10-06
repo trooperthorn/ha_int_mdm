@@ -4,10 +4,32 @@
       "user": {
         "title": "Connect to a tablet",
         "description": "Open the Local MDM app on the tablet. It shows its address and a pairing token once it is Device Owner.",
+        "menu_options": {
+          "unifi": "Pick the tablet from UniFi Network",
+          "manual": "Enter the address by hand"
+        },
         "data": {
           "host": "Tablet address",
           "port": "Port",
           "token": "Pairing token"
+        }
+      },
+      "manual": {
+        "title": "Enter the tablet's address",
+        "description": "Use the address and pairing token shown in the Local MDM app on the tablet.",
+        "data": {
+          "host": "Tablet address",
+          "port": "Port",
+          "token": "Pairing token"
+        }
+      },
+      "unifi": {
+        "title": "Pick the tablet from UniFi Network",
+        "description": "Connected UniFi clients named Room-Tab (for example Kitchen-Tab) that are not paired yet. The address, name and area come from UniFi; enter the pairing token shown in the Local MDM app.",
+        "data": {
+          "tablet": "Tablet",
+          "token": "Pairing token",
+          "port": "Port"
         }
       },
       "reauth_confirm": {
@@ -25,7 +47,8 @@
     "abort": {
       "already_configured": "This tablet is already configured.",
       "reauth_successful": "The token was updated.",
-      "wrong_device": "The token belongs to a different tablet than this entry."
+      "wrong_device": "The token belongs to a different tablet than this entry.",
+      "no_unifi_tablets": "No unpaired UniFi client named Room-Tab is connected."
     }
   },
   "options": {

@@ -61,11 +61,12 @@ async def test_setup_starts_reauth_on_bad_token(hass, config_entry, fake_client:
     assert flows and flows[0]["context"]["source"] == "reauth"
 
 
-async def test_setup_retries_when_webhook_push_fails(hass, config_entry, fake_client: FakeClient):
+async def test_setup_loads_when_webhook_push_fails(hass, config_entry, fake_client: FakeClient):
+    """A failed webhook PUT is retried on the tablet's next answer, not by setup retry."""
     fake_client.webhook_fail_with = LocalMdmConnectionError("down")
     config_entry.add_to_hass(hass)
-    assert not await hass.config_entries.async_setup(config_entry.entry_id)
-    assert config_entry.state is ConfigEntryState.SETUP_RETRY
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    assert config_entry.state is ConfigEntryState.LOADED
 
 
 async def test_poll_fallback_keeps_last_value_and_flags_unreachable(

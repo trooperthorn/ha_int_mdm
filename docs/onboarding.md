@@ -82,24 +82,61 @@ scripts/provision_lite.sh <adb serial> path/to/local-mdm-debug.apk app-minimal-r
 `adb devices` shows the serial. Both scripts print the tablet's address and
 token at the end (or tell you to read them from the app's screen). The
 owner script refuses to run while accounts or extra users remain. Companion
-is now installed but signed out; step 5 below is what's left to do on the
+is now installed but signed out; step 6 below is what's left to do on the
 tablet screen — sign-in can't happen over adb.
 
-## 4. Pair with Home Assistant
+## 4. Address plan in UniFi Network
 
-Settings > Devices & services > Add integration > Local MDM: enter the
-address, port 8484, and the token. The device appears as "Tablet <id>";
-rename it on its device page. The management tier sensor reads `owner` or
-`admin`.
+Every tablet gets a fixed IP reserved against its MAC and a UniFi client
+name of the form `Room-Tab` (`Kitchen-Tab`, `Master-Bedroom-Tab`). Local
+MDM reads both from the UniFi Network integration, so nobody types an
+address and the device is named and placed from the name.
+
+1. On the tablet: Settings > Wi-Fi > the tablet network > Privacy (Samsung:
+   MAC address type) > **Use device MAC**, then reconnect. Android otherwise
+   uses a random MAC per network and draws a new one after a reset, which
+   leaves the reservation pointing at nothing (the Samsung and the Pixel
+   each showed up under two MACs before this plan).
+2. In UniFi Network, Client Devices > the tablet > Settings: set the name to
+   `Room-Tab` and turn on Fixed IP. The provisioning scripts print the
+   factory MAC and the MAC in use, to check you have the right client.
+3. Reconnect the tablet so it takes the fixed address, and wait for the
+   UniFi integration in Home Assistant to show the client as home.
+
+The Room part is matched against existing Home Assistant area names
+(`Master-Bedroom-Tab` matches an area called "Master Bedroom"); no area is
+created when none matches.
+
+## 5. Pair with Home Assistant
+
+Settings > Devices & services > Add integration > Local MDM. With the UniFi
+Network integration loaded and at least one unpaired `Room-Tab` client
+connected, the first screen offers **Pick the tablet from UniFi Network**:
+choose the tablet and enter the token shown in the Local MDM app. The entry
+and the device are named after the UniFi client, the device lands in the
+matching area, and the UniFi MAC is registered on the device so the Local
+MDM and UniFi entries share one device page. **Enter the address by hand**
+is still there, and is the only screen when no UniFi tablet is found.
+
+After pairing, a tablet that stops answering is looked up in UniFi by its
+MAC. If UniFi reports it at another address and the tablet there accepts the
+stored token and reports the same device id, the entry follows it; with a
+fixed IP in place this only covers a missing reservation.
+
+To move an existing entry onto the plan (new name, factory MAC), pick the
+tablet from UniFi again: the flow recognises the device id and updates the
+address and MAC of the existing entry instead of adding a second one.
+
+The management tier sensor reads `owner` or `admin`.
 
 Then, on the device page:
 
 - Set **Kiosk packages** to the kiosk app. Samsung and Pixel:
   `io.homeassistant.companion.android`. Fire:
   `io.homeassistant.companion.android.minimal` (the suffix matters).
-- Turn on the switches the tablet needs, or select a profile (step 6).
+- Turn on the switches the tablet needs, or select a profile (step 7).
 
-## 5. Sign in to Companion
+## 6. Sign in to Companion
 
 Companion was already installed in step 3. Device Owner tablets that will
 carry a Google account: add the account back first if you want Play to be
@@ -114,7 +151,7 @@ through, on every tier.
 Sign in to Companion on the tablet with the Home Assistant URL and a user
 account. This is the one step nobody can do over adb.
 
-## 6. Apply a profile (optional)
+## 7. Apply a profile (optional)
 
 The security profile package (docs/examples/security_profiles.yaml) defines
 console, family, guest and locked. Add an `input_select` and automation for
@@ -123,7 +160,7 @@ the new tablet with its device id (device page URL), or call
 
 Add the Google account back **before** a profile that locks accounts.
 
-## 7. Verify
+## 8. Verify
 
 On the device page: Device owner on (or tier admin on a Fire), enforcement
 failures 0, kiosk lock reads Locked when kiosk is on. On the tablet: a

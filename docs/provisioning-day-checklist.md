@@ -63,9 +63,16 @@ From the `android/` folder of this repository:
 
 ## 3. Pair with Home Assistant
 
+- [ ] Tablet Wi-Fi network set to **Use device MAC**, then reconnected.
+- [ ] UniFi Network > Client Devices > the tablet: name `Room-Tab` (for
+      example `Kitchen-Tab`), Fixed IP on. Check the MAC against the one the
+      script printed. See onboarding.md, "Address plan".
 - [ ] Settings > Devices & services > Add integration > Local MDM.
-- [ ] Enter address, port `8484`, and the token.
-- [ ] Device appears as "Tablet `<id>`" — rename it on its device page.
+- [ ] **Pick the tablet from UniFi Network**, choose `Room-Tab`, enter the
+      token. No UniFi choice means the client is not named `Room-Tab`, is
+      not connected yet, or is already paired; "Enter the address by hand"
+      still works.
+- [ ] Device is named `Room-Tab` and sits in the matching area.
 - [ ] Management tier sensor reads `owner` (Device Owner) or `admin` (Fire).
 
 ## 4. Set kiosk package and switches
