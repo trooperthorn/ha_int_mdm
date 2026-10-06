@@ -10,7 +10,7 @@ wsl -e bash -lc 'cd /mnt/c/Users/<you>/repos/ha_int_mdm && ~/mdmvenv/bin/python 
 ```
 
 Venv: `python3.14 -m venv ~/mdmvenv && ~/mdmvenv/bin/pip install -r requirements_test.txt`.
-The harness pin 0.13.364 installs core 2026.9.1; CI asserts that version.
+The harness pin 0.13.367 installs core 2026.9.4; CI asserts that version.
 The full gate is `ruff check`, `ruff format --check`, `mypy --python-version 3.14
 custom_components/local_mdm/`, `pytest tests`, and
 `python scripts/build_release_artifacts.py --validate-only`.
