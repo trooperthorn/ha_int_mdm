@@ -11,7 +11,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-import voluptuous as vol
+import probatio
 from homeassistant.components import webhook
 from homeassistant.config_entries import (
     ConfigFlow,
@@ -53,23 +53,23 @@ from .unifi import UnifiClient, async_mac_for_ip, async_tablet_candidates
 
 CONF_TABLET = "tablet"
 
-USER_SCHEMA = vol.Schema(
+USER_SCHEMA = probatio.Schema(
     {
-        vol.Required(CONF_HOST): TextSelector(TextSelectorConfig(type=TextSelectorType.TEXT)),
-        vol.Required(CONF_PORT, default=DEFAULT_PORT): NumberSelector(
+        probatio.Required(CONF_HOST): TextSelector(TextSelectorConfig(type=TextSelectorType.TEXT)),
+        probatio.Required(CONF_PORT, default=DEFAULT_PORT): NumberSelector(
             NumberSelectorConfig(min=1, max=65535, mode=NumberSelectorMode.BOX)
         ),
-        vol.Required(CONF_TOKEN): TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD)),
+        probatio.Required(CONF_TOKEN): TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD)),
     }
 )
 
-REAUTH_SCHEMA = vol.Schema(
-    {vol.Required(CONF_TOKEN): TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD))}
+REAUTH_SCHEMA = probatio.Schema(
+    {probatio.Required(CONF_TOKEN): TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD))}
 )
 
-OPTIONS_SCHEMA = vol.Schema(
+OPTIONS_SCHEMA = probatio.Schema(
     {
-        vol.Required(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): NumberSelector(
+        probatio.Required(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): NumberSelector(
             NumberSelectorConfig(
                 min=MIN_SCAN_INTERVAL,
                 max=MAX_SCAN_INTERVAL,
@@ -172,15 +172,15 @@ class LocalMdmConfigFlow(ConfigFlow, domain=DOMAIN):
             SelectOptionDict(value=client.mac, label=f"{client.name} ({client.ip})")
             for client in self._candidates.values()
         ]
-        schema = vol.Schema(
+        schema = probatio.Schema(
             {
-                vol.Required(CONF_TABLET): SelectSelector(
+                probatio.Required(CONF_TABLET): SelectSelector(
                     SelectSelectorConfig(options=options, mode=SelectSelectorMode.DROPDOWN)
                 ),
-                vol.Required(CONF_TOKEN): TextSelector(
+                probatio.Required(CONF_TOKEN): TextSelector(
                     TextSelectorConfig(type=TextSelectorType.PASSWORD)
                 ),
-                vol.Required(CONF_PORT, default=DEFAULT_PORT): NumberSelector(
+                probatio.Required(CONF_PORT, default=DEFAULT_PORT): NumberSelector(
                     NumberSelectorConfig(min=1, max=65535, mode=NumberSelectorMode.BOX)
                 ),
             }

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import voluptuous as vol
+import probatio
 from homeassistant.core import HomeAssistant, ServiceCall, callback
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import config_validation as cv, device_registry as dr
@@ -15,14 +15,14 @@ ATTR_DEVICE_ID = "device_id"
 ATTR_URL = "url"
 ATTR_SHA256 = "sha256"
 
-INSTALL_SCHEMA = vol.Schema(
+INSTALL_SCHEMA = probatio.Schema(
     {
-        vol.Required(ATTR_DEVICE_ID): cv.string,
-        vol.Required(ATTR_URL): vol.All(cv.url, vol.Match(r"^https?://")),
-        vol.Optional(ATTR_SHA256): vol.All(
+        probatio.Required(ATTR_DEVICE_ID): cv.string,
+        probatio.Required(ATTR_URL): probatio.All(cv.url, probatio.Match(r"^https?://")),
+        probatio.Optional(ATTR_SHA256): probatio.All(
             cv.string,
-            vol.Lower,
-            vol.Match(r"^(sha256:)?[0-9a-f]{64}$"),
+            probatio.Lower,
+            probatio.Match(r"^(sha256:)?[0-9a-f]{64}$"),
             lambda value: value.removeprefix("sha256:"),
         ),
     }
@@ -48,12 +48,12 @@ ATTR_SSID = "ssid"
 ATTR_PASSWORD = "password"
 ATTR_HIDDEN = "hidden"
 
-WIFI_SCHEMA = vol.Schema(
+WIFI_SCHEMA = probatio.Schema(
     {
-        vol.Required(ATTR_DEVICE_ID): cv.string,
-        vol.Required(ATTR_SSID): vol.All(cv.string, vol.Length(min=1, max=32)),
-        vol.Optional(ATTR_PASSWORD): vol.All(cv.string, vol.Length(min=8, max=63)),
-        vol.Optional(ATTR_HIDDEN, default=False): cv.boolean,
+        probatio.Required(ATTR_DEVICE_ID): cv.string,
+        probatio.Required(ATTR_SSID): probatio.All(cv.string, probatio.Length(min=1, max=32)),
+        probatio.Optional(ATTR_PASSWORD): probatio.All(cv.string, probatio.Length(min=8, max=63)),
+        probatio.Optional(ATTR_HIDDEN, default=False): cv.boolean,
     }
 )
 
@@ -68,10 +68,10 @@ async def _configure_wifi(call: ServiceCall) -> None:
 SERVICE_APPLY_POLICY = "apply_policy"
 ATTR_POLICY = "policy"
 
-APPLY_SCHEMA = vol.Schema(
+APPLY_SCHEMA = probatio.Schema(
     {
-        vol.Required(ATTR_DEVICE_ID): cv.string,
-        vol.Required(ATTR_POLICY): dict,
+        probatio.Required(ATTR_DEVICE_ID): cv.string,
+        probatio.Required(ATTR_POLICY): dict,
     }
 )
 
@@ -89,11 +89,11 @@ async def _apply_policy(call: ServiceCall) -> None:
 SERVICE_APPROVE_PACKAGE = "approve_package"
 ATTR_PACKAGE = "package"
 
-APPROVE_SCHEMA = vol.Schema(
+APPROVE_SCHEMA = probatio.Schema(
     {
-        vol.Required(ATTR_DEVICE_ID): cv.string,
-        vol.Required(ATTR_PACKAGE): vol.All(
-            cv.string, vol.Match(r"^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$")
+        probatio.Required(ATTR_DEVICE_ID): cv.string,
+        probatio.Required(ATTR_PACKAGE): probatio.All(
+            cv.string, probatio.Match(r"^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$")
         ),
     }
 )
