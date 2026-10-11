@@ -1,4 +1,4 @@
-"""Sensors: battery, versions, and the last report time."""
+"""Sensors: battery, versions, the last report time, and the fleet status."""
 
 from __future__ import annotations
 
@@ -120,6 +120,54 @@ SENSORS: tuple[LocalMdmSensorDescription, ...] = (
 )
 
 
+# Fleet status: one state per tablet that says whether it needs attention,
+# so a dashboard can list every tablet without knowing its entity ids.
+FLEET_ONLINE = "online"
+FLEET_OFFLINE = "offline"
+FLEET_NEVER_REPORTED = "never_reported"
+FLEET_MISCONFIGURED = "misconfigured"
+FLEET_NEEDS_ATTENTION = "needs_attention"
+FLEET_STATUS_OPTIONS = [
+    FLEET_ONLINE,
+    FLEET_OFFLINE,
+    FLEET_NEVER_REPORTED,
+    FLEET_MISCONFIGURED,
+    FLEET_NEEDS_ATTENTION,
+]
+
+
+def fleet_status(status: DeviceStatus) -> tuple[str, list[str]]:
+    """The fleet state for a tablet and the reasons behind it.
+
+    Unreachable wins: an offline tablet's other fields are only its last
+    report. A tablet that is not Device Owner cannot enforce anything, so it
+    is misconfigured; enforcement failures alone need attention.
+    """
+    if not status.is_reachable:
+        state = FLEET_OFFLINE if status.reported_at else FLEET_NEVER_REPORTED
+        return state, ["not_reachable"]
+    reasons: list[str] = []
+    if not status.is_device_owner:
+        reasons.append("not_device_owner")
+    if status.enforcement_failures:
+        reasons.append("enforcement_failures")
+    if status.pending_packages:
+        reasons.append("apps_awaiting_approval")
+    if "not_device_owner" in reasons:
+        return FLEET_MISCONFIGURED, reasons
+    if reasons:
+        return FLEET_NEEDS_ATTENTION, reasons
+    return FLEET_ONLINE, reasons
+
+
+FLEET_STATUS_SENSOR = SensorEntityDescription(
+    key="fleet_status",
+    translation_key="fleet_status",
+    device_class=SensorDeviceClass.ENUM,
+    options=FLEET_STATUS_OPTIONS,
+)
+
+
 ACTION_SENSORS: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
         key="last_lock_screen",
@@ -149,6 +197,7 @@ async def async_setup_entry(
     async_add_entities(
         [LocalMdmSensor(coordinator, d) for d in SENSORS]
         + [LocalMdmActionSensor(coordinator, d) for d in ACTION_SENSORS]
+        + [LocalMdmFleetStatusSensor(coordinator, FLEET_STATUS_SENSOR)]
     )
 
 
@@ -202,3 +251,32 @@ class LocalMdmActionSensor(LocalMdmEntity, SensorEntity):
         if action is None:
             return None
         return {"message": action["message"], "at": action["at"]}
+
+
+class LocalMdmFleetStatusSensor(LocalMdmEntity, SensorEntity):
+    """One state per tablet for fleet dashboards: online, offline, misconfigured.
+
+    The attributes carry what a dashboard row needs without looking up other
+    entity ids, so a renamed or newly paired tablet shows up correctly.
+    """
+
+    @property
+    def native_value(self) -> str:
+        return fleet_status(self.coordinator.data)[0]
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        status = self.coordinator.data
+        _state, reasons = fleet_status(status)
+        return {
+            "reasons": reasons,
+            "tablet": self.coordinator.config_entry.title,
+            "reachable": status.is_reachable,
+            "device_owner": status.is_device_owner,
+            "kiosk_active": status.lock_task_active,
+            "battery": status.battery_level,
+            "last_report": status.reported_at,
+            "enforcement_failures": status.enforcement_failures,
+            "pending_packages": status.pending_packages,
+            "tier": status.tier,
+        }

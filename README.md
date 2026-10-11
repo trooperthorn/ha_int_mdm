@@ -26,6 +26,11 @@ One device per tablet with:
 - Status sensors: Device Owner, kiosk lock, enforcement problem, Wi-Fi,
   Wi-Fi network, battery, charging, OS update pending, Android version,
   security patch, kiosk app version, policy version, DPC version, last report.
+- Fleet status: one sensor per tablet (`online`, `offline`, `never_reported`,
+  `misconfigured`, `needs_attention`) whose attributes say why and carry the
+  battery, kiosk state and last report. It never goes unavailable, so a
+  dashboard can list every tablet with an `integration: local_mdm` filter and
+  show an offline or misconfigured one as such instead of as missing entities.
 - Buttons: lock screen now, reboot, refresh. A text entity holds the kiosk package list.
 - Actions: `local_mdm.install_package` (silent APK install from a URL, for
   keeping the Companion app current from GitHub releases) and
