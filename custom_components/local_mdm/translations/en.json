@@ -225,6 +225,16 @@
       },
       "pending_packages": {
         "name": "Apps awaiting approval"
+      },
+      "fleet_status": {
+        "name": "Fleet status",
+        "state": {
+          "online": "Online",
+          "offline": "Offline",
+          "never_reported": "Never reported",
+          "misconfigured": "Misconfigured",
+          "needs_attention": "Needs attention"
+        }
       }
     },
     "button": {

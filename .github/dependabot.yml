@@ -5,6 +5,11 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    groups:
+      # init and analyze must move together; split bumps fail CodeQL.
+      codeql:
+        patterns:
+          - "github/codeql-action*"
   - package-ecosystem: pip
     directory: /
     schedule:

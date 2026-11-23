@@ -1,5 +1,16 @@
 # Decisions
 
+## 2026-10-08: Minimum Home Assistant is 2026.10.0, schemas use probatio
+
+Core 2026.10 types flow, service and websocket schemas as probatio, so the
+voluptuous schemas failed mypy (developer blog 2026-09-30, "Probatio is our
+validation engine"). The integration now imports `probatio` directly, as core
+does; runtime behavior is unchanged because core has validated with probatio
+since 2026.9. The suite runs on core 2026.10.0 and `hacs.json` follows the
+tested core. CodeQL init and analyze move to v4.38.2 together and Dependabot
+now groups them. Rejected: aliasing `probatio as vol`, which core's lint config
+bans.
+
 ## 2026-09-10: custom DPC over the Android Management API
 
 Rejected: a backend built on Google's Android Management API. It requires

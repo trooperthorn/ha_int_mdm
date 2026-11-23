@@ -115,6 +115,15 @@
       },
       "wifi_ssid": {
         "default": "mdi:wifi"
+      },
+      "fleet_status": {
+        "default": "mdi:tablet-dashboard",
+        "state": {
+          "offline": "mdi:tablet-off",
+          "never_reported": "mdi:help-circle-outline",
+          "misconfigured": "mdi:alert-octagon",
+          "needs_attention": "mdi:alert"
+        }
       }
     },
     "button": {
